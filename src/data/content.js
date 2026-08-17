@@ -28,6 +28,7 @@ export const brand = {
     'Graduation Photography',
     'Vehicle Photography',
     'Sports Photography',
+    'Videography / Cinematography',
   ],
 }
 
@@ -38,7 +39,7 @@ export const contact = {
   whatsappUrl: 'https://wa.me/94788432741',
   facebookUrl: 'https://web.facebook.com/Tilnogzphoto',
   address: 'Colombo 7, Sri Lanka',
-  defaultMessage: 'Hello Tilnogz Photography, I would like to inquire about a photography session.',
+  defaultMessage: 'Hello Tilnogz Photography, I would like to inquire about a photography / videography session.',
 }
 
 /**
@@ -104,31 +105,41 @@ export const servicesList = [
       'Split-second action freezing, athletic intensity, tournament coverage, and dynamic movement on tracks, courts, and fields.',
     details: 'Fast shutter speed mastery, high-burst action tracking, and dramatic field storytelling.',
   },
+  {
+    index: '06',
+    id: 'videography',
+    title: 'Videography / Cinematography',
+    category: 'Cinematic Motion & Storytelling',
+    description:
+      'High-definition cinematic highlight films, wedding teasers, dynamic vehicle reels, and emotional pre-shoot motion monographs with drone and gimbal stabilization.',
+    details: '4K Ultra-HD capture, master audio design, color graded visual aesthetics, and teaser edits.',
+  },
 ]
 
 export const aboutContent = {
   eyebrow: 'BEHIND THE LENS',
   title: 'TILNOGZ PHOTOGRAPHY',
-  lead: 'Specializing in Wedding, Pre-Wedding, Graduation, Vehicle, and Sports Photography.',
+  lead: 'Specializing in Wedding, Pre-Wedding, Graduation, Vehicle, Sports Photography & Cinematography.',
   body: 'Led by Tharindu Lakshan and based at Colombo 7, Sri Lanka, Tilnogz Photography creates authentic visual narratives with deliberate composition, vivid emotion, and artistic precision.',
   details: [
     { label: 'ADDRESS', value: 'Colombo 7, Sri Lanka' },
     { label: 'PHOTOGRAPHER', value: 'Tharindu Lakshan' },
-    { label: 'SERVICES', value: 'Wedding · Pre-Wedding · Graduation · Vehicle · Sports' },
-    { label: 'EQUIPMENT', value: 'Professional Sony Alpha Series' },
+    { label: 'SERVICES', value: 'Wedding · Pre-Wedding · Graduation · Vehicle · Sports · Videography' },
+    { label: 'EQUIPMENT', value: 'Professional Sony Alpha & Cinema Series' },
   ],
 }
 
 export const footerContent = {
   brand: 'TILNOGZ PHOTOGRAPHY',
   address: 'Address: Colombo 7, Sri Lanka',
-  statement: 'WEDDING · PRE-WEDDING · GRADUATION · VEHICLE · SPORTS',
+  statement: 'WEDDING · PRE-WEDDING · GRADUATION · VEHICLE · SPORTS · VIDEOGRAPHY',
   disciplines: [
     'Wedding Photography',
     'Pre-Wedding / Engagement Photography',
     'Graduation Photography',
     'Vehicle Photography',
     'Sports Photography',
+    'Videography / Cinematography',
   ],
   copyright: `© ${new Date().getFullYear()} Tilnogz Photography. All Rights Reserved.`,
 }

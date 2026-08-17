@@ -1,6 +1,6 @@
 import React from 'react'
 import { motion } from 'framer-motion'
-import { MapPin, Heart, Sparkles, GraduationCap, Car, Trophy } from 'lucide-react'
+import { MapPin, Heart, Sparkles, GraduationCap, Car, Trophy, Video } from 'lucide-react'
 import { getWhatsAppLink } from '../data/content'
 import { useContent } from '../context/ContentContext'
 
@@ -34,6 +34,12 @@ const servicesData = [
     name: 'Sports Photography',
     desc: 'High-Velocity Action & Speed',
     icon: Trophy,
+  },
+  {
+    id: 6,
+    name: 'Videography / Film',
+    desc: 'Cinematic Motion & 4K Teasers',
+    icon: Video,
   },
 ]
 

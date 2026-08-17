@@ -156,7 +156,7 @@ export default function FeaturedWork({ onOpenProject }) {
                   x: {
                     repeat: Infinity,
                     repeatType: 'loop',
-                    duration: 25,
+                    duration: Math.max(65, filteredAlbums.length * 2.8),
                     ease: 'linear',
                   },
                 }}

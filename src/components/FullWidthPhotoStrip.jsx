@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { motion } from 'framer-motion'
-import { editorial, street, field, nature } from '../data/images'
+import { editorial, street, nature } from '../data/images'
 
 // High-impact vertical gallery frames spanning full-width
 const baseStripPhotos = [
@@ -48,7 +48,7 @@ export default function FullWidthPhotoStrip({ onOpenProject }) {
             x: {
               repeat: Infinity,
               repeatType: 'loop',
-              duration: 30,
+              duration: 65,
               ease: 'linear',
             },
           }}
