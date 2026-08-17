@@ -4,11 +4,11 @@ import { contact } from '../data/content'
 import { editorial, street, field } from '../data/images'
 import { fadeUp } from '../lib/motion'
 
-// 4 alternating testimonial stories exactly matching the reference layout
+// 4 alternating testimonial stories featuring only female client names
 const testimonialStories = [
   {
     id: 1,
-    clientName: 'Sithmal And Lakeesha',
+    clientName: 'Lakeesha',
     service: 'Special Event & Portrait Session',
     location: 'Galle, Sri Lanka',
     image: editorial.arcade,
@@ -18,7 +18,7 @@ const testimonialStories = [
   },
   {
     id: 2,
-    clientName: 'Anjana And Ishara',
+    clientName: 'Ishara',
     service: 'Lifestyle & Editorial Session',
     location: 'Hikkaduwa, Sri Lanka',
     image: street.lean,
@@ -28,7 +28,7 @@ const testimonialStories = [
   },
   {
     id: 3,
-    clientName: 'Supun And Anju',
+    clientName: 'Anju',
     service: 'Sports & Action Coverage',
     location: 'Colombo, Sri Lanka',
     image: field.motionTurn,
@@ -38,7 +38,7 @@ const testimonialStories = [
   },
   {
     id: 4,
-    clientName: 'Rowena And Geethanjana',
+    clientName: 'Rowena',
     service: 'Architecture & Event Monograph',
     location: 'Galle, Sri Lanka',
     image: editorial.chandelier,
