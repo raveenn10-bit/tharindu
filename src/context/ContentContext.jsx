@@ -13,7 +13,7 @@ import {
   TABLE_PHOTOS,
 } from '../lib/supabaseClient'
 
-const STORAGE_KEY = 'tilnogz_content_store_v7'
+const STORAGE_KEY = 'tilnogz_content_store_v8'
 const AUTH_KEY = 'tilnogz_admin_auth'
 const DEFAULT_PASSCODE = 'tilnogz2026'
 

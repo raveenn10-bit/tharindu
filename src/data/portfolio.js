@@ -108,20 +108,6 @@ export const featured = [
     note: 'Seated portrait on a concrete architectural ledge with soft natural editorial lighting.',
   }),
 
-  // --- shhot 4: Sports & Action ---
-  item('f-rider1', field.riderFront, 'Evening Velocity', 'Vehicle Photography', {
-    note: 'Motorcyclist in golden evening light on the open road, capturing sports speed and focus.',
-  }),
-  item('f-rider2', field.riderSeated, 'Paddock Ready', 'Vehicle Photography', {
-    note: 'Candid rider portrait with machine in open field conditions.',
-  }),
-  item('f-turn', field.motionTurn, 'Decisive Pivot', 'Sports Photography', {
-    note: 'Subject caught in mid-turn motion with backpack in natural tropical daylight.',
-  }),
-  item('f-fence', field.fenceLine, 'Perimeter Line', 'Sports Photography', {
-    note: 'Athlete pausing along the boundary perimeter in direct midday sunlight.',
-  }),
-
   // --- Wild Life: Wildlife & Coastal Nature ---
   item('f-island', nature.island, 'Wooded Lagoon Sanctuary', 'Pre-Wedding / Engagement Photography', {
     note: 'Wooded coastal island and boathouse across turquoise waters in southern Sri Lanka.',

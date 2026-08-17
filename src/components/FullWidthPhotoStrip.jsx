@@ -8,11 +8,11 @@ const baseStripPhotos = [
   { id: 2, title: 'Coastal Movement', category: 'Lifestyle', image: street.lean },
   { id: 3, title: 'Blue Archway', category: 'Heritage', image: editorial.blueFrame },
   { id: 4, title: 'Iron Spiral Staircase', category: 'Architecture', image: editorial.staircase },
-  { id: 5, title: 'Sprint Velocity', category: 'Sports', image: field.riderFront },
+  { id: 5, title: 'Floral Radiance', category: 'Portrait', image: '/photos/maheshika/maheshika-01.jpg' },
   { id: 6, title: 'Tropical Island Lagoon', category: 'Landscape', image: nature.island },
   { id: 7, title: 'Grand Venue Chandelier', category: 'Events', image: editorial.chandelier },
   { id: 8, title: 'Street Glance', category: 'Portrait', image: street.glance },
-  { id: 9, title: 'Action Turn', category: 'Sports', image: field.motionTurn },
+  { id: 9, title: 'Action Form', category: 'Action', image: '/photos/pasindu-dananjaya.jpg' },
 ]
 
 // Duplicate the array 3 times for a seamless continuous marquee loop
