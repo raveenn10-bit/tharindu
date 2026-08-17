@@ -13,15 +13,15 @@ import {
   TABLE_PHOTOS,
 } from '../lib/supabaseClient'
 
-const STORAGE_KEY = 'tilnogz_content_store_v3'
+const STORAGE_KEY = 'tilnogz_content_store_v4'
 const AUTH_KEY = 'tilnogz_admin_auth'
 const DEFAULT_PASSCODE = 'tilnogz2026'
 
-// 4 default testimonials
+// 3 curated client testimonials
 const defaultTestimonials = [
   {
     id: 't-1',
-    clientName: 'Lakeesha',
+    clientName: 'Imalka Sandeepani',
     service: 'Special Event & Portrait Session',
     location: 'Galle, Sri Lanka',
     image: '/photos/editorial/ed-01.jpg',
@@ -32,17 +32,6 @@ const defaultTestimonials = [
   },
   {
     id: 't-2',
-    clientName: 'Ishara',
-    service: 'Lifestyle & Editorial Session',
-    location: 'Hikkaduwa, Sri Lanka',
-    image: '/photos/street/st-01.jpg',
-    review:
-      'Your photography skills are simply amazing, as you’ve managed to capture each important moment on camera. I have been impressed with your professionalism and would like to express my gratitude for doing such an amazing job! thanks a lot for every thing malli.. keep up good work. good luck ❤️',
-    is_published: true,
-    sort_order: 2,
-  },
-  {
-    id: 't-3',
     clientName: 'Anju',
     service: 'Sports & Action Coverage',
     location: 'Colombo, Sri Lanka',
@@ -50,10 +39,10 @@ const defaultTestimonials = [
     review:
       'A huge thank goes to Tilnogz Photography for doing our pre-wedding shoot in the best way a client can think of 💖 All his clicks speak out his talent, passion, and dedication he puts into the work. We’re also grateful for his friendly and supportive service and for the faster outputs. All the very best to rank higher and higher in the industry! 😊',
     is_published: true,
-    sort_order: 3,
+    sort_order: 2,
   },
   {
-    id: 't-4',
+    id: 't-3',
     clientName: 'Rowena',
     service: 'Architecture & Event Monograph',
     location: 'Galle, Sri Lanka',
@@ -61,7 +50,7 @@ const defaultTestimonials = [
     review:
       'I just wanted to thank you for the beautiful wedding photos you’ve taken. You captured the most special moments, and we were glad to get so many great images. All our friends and family members appreciated every picture. Working with you was a very positive experience. You took a perfect photo that looks very natural. We are very grateful for your work and will definitely turn to you in the future. 😍 ❤️',
     is_published: true,
-    sort_order: 4,
+    sort_order: 3,
   },
 ]
 
