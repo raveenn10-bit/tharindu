@@ -1,5 +1,6 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { motion } from 'framer-motion'
+import { Quote } from 'lucide-react'
 import { contact } from '../data/content'
 import { editorial, street, field } from '../data/images'
 import { fadeUp } from '../lib/motion'
@@ -49,8 +50,20 @@ const testimonialStories = [
 ]
 
 export default function Testimonials() {
+  const [activeMobileStory, setActiveMobileStory] = useState(0)
+
+  const handleMobileScroll = (e) => {
+    const container = e.target
+    const scrollPosition = container.scrollLeft
+    const cardWidth = container.offsetWidth * 0.86
+    const newIndex = Math.round(scrollPosition / cardWidth)
+    if (newIndex >= 0 && newIndex < testimonialStories.length) {
+      setActiveMobileStory(newIndex)
+    }
+  }
+
   return (
-    <section id="testimonials" className="py-16 sm:py-24 md:py-32 bg-white relative border-t border-charcoal/5 overflow-hidden">
+    <section id="testimonials" className="py-16 sm:py-24 md:py-32 bg-white relative border-t border-charcoal/5 overflow-hidden select-none">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Centered Heading with Bidirectional Fade */}
         <motion.div
@@ -58,19 +71,89 @@ export default function Testimonials() {
           initial="hidden"
           whileInView="visible"
           viewport={{ once: false, amount: 0.2 }}
-          className="text-center mb-14 sm:mb-20 md:mb-24"
+          className="text-center mb-10 sm:mb-16 md:mb-24"
         >
           <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl text-charcoal tracking-[0.25em] uppercase font-normal">
             TESTIMONIALS
           </h2>
         </motion.div>
 
-        {/* Alternating Testimonial Stories with Bidirectional Left/Right Directional Scroll Animations */}
-        <div className="space-y-14 sm:space-y-20 md:space-y-28">
+        {/* ======================================================== */}
+        {/* MOBILE ONLY: Horizontal Swipeable Testimonial Story Cards*/}
+        {/* ======================================================== */}
+        <div className="block lg:hidden">
+          <div
+            onScroll={handleMobileScroll}
+            className="flex gap-4 overflow-x-auto no-scrollbar snap-x snap-mandatory px-4 pb-6 -mx-4"
+          >
+            {testimonialStories.map((story) => (
+              <div
+                key={story.id}
+                className="w-[86vw] flex-shrink-0 snap-center bg-[#FAF8F5] border border-charcoal/10 rounded-2xl p-6 shadow-md flex flex-col justify-between"
+              >
+                <div>
+                  {/* Card Header: Client Photo & Name */}
+                  <div className="flex items-center gap-4 mb-4">
+                    <div className="w-16 h-16 rounded-xl overflow-hidden shadow-sm flex-shrink-0 bg-sand">
+                      <img
+                        src={story.image.src}
+                        alt={story.clientName}
+                        className="w-full h-full object-cover object-center"
+                        loading="lazy"
+                        decoding="async"
+                      />
+                    </div>
+                    <div>
+                      <h3 className="font-serif text-lg text-charcoal font-bold tracking-tight">
+                        {story.clientName}
+                      </h3>
+                      <span className="text-[11px] font-sans text-copper font-medium block">
+                        {story.service}
+                      </span>
+                      <span className="text-[10px] font-sans text-charcoal-muted">
+                        {story.location}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Quote Body */}
+                  <div className="relative">
+                    <Quote className="w-6 h-6 text-copper/25 absolute -top-2 -left-1 pointer-events-none" />
+                    <p className="font-body text-xs sm:text-sm text-charcoal/85 leading-relaxed pl-3 italic">
+                      "{story.review}"
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Mobile Swipe Indicators & Pagination Dots */}
+          <div className="flex items-center justify-center gap-2 mt-2">
+            {testimonialStories.map((_, idx) => (
+              <span
+                key={idx}
+                className={`h-1.5 rounded-full transition-all duration-300 ${
+                  activeMobileStory === idx
+                    ? 'w-6 bg-copper'
+                    : 'w-1.5 bg-charcoal/20'
+                }`}
+              />
+            ))}
+          </div>
+          <div className="text-center text-[10px] font-sans text-charcoal-muted mt-2">
+            <span>Swipe to read client stories →</span>
+          </div>
+        </div>
+
+        {/* ======================================================== */}
+        {/* DESKTOP ONLY: Alternating Testimonials with Scroll Motion */}
+        {/* ======================================================== */}
+        <div className="hidden lg:block space-y-20 md:space-y-28">
           {testimonialStories.map((story) => (
             <div
               key={story.id}
-              className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 lg:gap-12 items-center overflow-hidden"
+              className="grid grid-cols-12 gap-8 lg:gap-12 items-center overflow-hidden"
             >
               {story.layout === 'text-left' ? (
                 <>
@@ -80,12 +163,12 @@ export default function Testimonials() {
                     whileInView={{ opacity: 1, x: 0 }}
                     viewport={{ once: false, amount: 0.2 }}
                     transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-                    className="lg:col-span-8 flex flex-col justify-center order-2 lg:order-1"
+                    className="col-span-8 flex flex-col justify-center"
                   >
-                    <h3 className="font-serif text-lg sm:text-xl md:text-2xl text-charcoal font-semibold mb-3 sm:mb-4">
+                    <h3 className="font-serif text-2xl text-charcoal font-semibold mb-3">
                       {story.clientName}
                     </h3>
-                    <p className="font-body text-xs sm:text-sm md:text-base text-charcoal/80 leading-relaxed max-w-[62ch]">
+                    <p className="font-body text-base text-charcoal/80 leading-relaxed max-w-[62ch]">
                       {story.review}
                     </p>
                   </motion.div>
@@ -96,9 +179,9 @@ export default function Testimonials() {
                     whileInView={{ opacity: 1, x: 0 }}
                     viewport={{ once: false, amount: 0.2 }}
                     transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-                    className="lg:col-span-4 order-1 lg:order-2"
+                    className="col-span-4"
                   >
-                    <div className="overflow-hidden shadow-md bg-sand-light aspect-[16/10] sm:aspect-[4/3] rounded-sm">
+                    <div className="overflow-hidden shadow-md bg-sand-light aspect-[4/3] rounded-sm">
                       <img
                         src={story.image.src}
                         alt={story.clientName}
@@ -117,9 +200,9 @@ export default function Testimonials() {
                     whileInView={{ opacity: 1, x: 0 }}
                     viewport={{ once: false, amount: 0.2 }}
                     transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-                    className="lg:col-span-4 order-1"
+                    className="col-span-4"
                   >
-                    <div className="overflow-hidden shadow-md bg-sand-light aspect-[16/10] sm:aspect-[4/3] rounded-sm">
+                    <div className="overflow-hidden shadow-md bg-sand-light aspect-[4/3] rounded-sm">
                       <img
                         src={story.image.src}
                         alt={story.clientName}
@@ -136,12 +219,12 @@ export default function Testimonials() {
                     whileInView={{ opacity: 1, x: 0 }}
                     viewport={{ once: false, amount: 0.2 }}
                     transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-                    className="lg:col-span-8 flex flex-col justify-center order-2"
+                    className="col-span-8 flex flex-col justify-center"
                   >
-                    <h3 className="font-serif text-lg sm:text-xl md:text-2xl text-charcoal font-semibold mb-3 sm:mb-4">
+                    <h3 className="font-serif text-2xl text-charcoal font-semibold mb-3">
                       {story.clientName}
                     </h3>
-                    <p className="font-body text-xs sm:text-sm md:text-base text-charcoal/80 leading-relaxed max-w-[62ch]">
+                    <p className="font-body text-base text-charcoal/80 leading-relaxed max-w-[62ch]">
                       {story.review}
                     </p>
                   </motion.div>
