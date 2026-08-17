@@ -1,0 +1,143 @@
+import React, { useRef, useState } from 'react'
+import { UploadCloud, Image, Link, X, Check } from 'lucide-react'
+
+export default function ImageUploader({
+  value,
+  onChange,
+  label = 'Upload Image',
+  aspectRatio = 'aspect-[4/3]',
+  compact = false,
+}) {
+  const fileInputRef = useRef(null)
+  const [urlInput, setUrlInput] = useState('')
+  const [isEnteringUrl, setIsEnteringUrl] = useState(false)
+  const [dragOver, setDragOver] = useState(false)
+
+  const handleFile = (file) => {
+    if (!file || !file.type.startsWith('image/')) return
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      onChange(e.target.result)
+    }
+    reader.readAsDataURL(file)
+  }
+
+  const handleDrop = (e) => {
+    e.preventDefault()
+    setDragOver(false)
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      handleFile(e.dataTransfer.files[0])
+    }
+  }
+
+  const handleUrlSubmit = (e) => {
+    e.preventDefault()
+    if (urlInput.trim()) {
+      onChange(urlInput.trim())
+      setUrlInput('')
+      setIsEnteringUrl(false)
+    }
+  }
+
+  return (
+    <div className="space-y-2">
+      {label && <label className="block text-xs font-sans font-semibold text-charcoal/80 uppercase tracking-wider">{label}</label>}
+
+      {value ? (
+        <div className="relative group rounded-xl overflow-hidden border border-charcoal/15 bg-sand/30">
+          <div className={`${aspectRatio} w-full overflow-hidden flex items-center justify-center bg-charcoal/5`}>
+            <img src={value} alt="Preview" className="w-full h-full object-cover object-center" />
+          </div>
+          <div className="absolute inset-0 bg-charcoal/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="px-3 py-1.5 bg-white text-charcoal text-xs font-sans font-bold rounded shadow hover:bg-copper hover:text-white transition-colors"
+            >
+              Replace
+            </button>
+            <button
+              type="button"
+              onClick={() => onChange('')}
+              className="p-1.5 bg-red-600 text-white rounded shadow hover:bg-red-700 transition-colors"
+              title="Remove Image"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div>
+          <div
+            onDragOver={(e) => {
+              e.preventDefault()
+              setDragOver(true)
+            }}
+            onDragLeave={() => setDragOver(false)}
+            onDrop={handleDrop}
+            onClick={() => fileInputRef.current?.click()}
+            className={`border-2 border-dashed rounded-xl ${aspectRatio} flex flex-col items-center justify-center p-4 cursor-pointer transition-all ${
+              dragOver ? 'border-copper bg-copper/5 scale-[0.99]' : 'border-charcoal/20 bg-[#FAF8F5] hover:border-copper/50 hover:bg-sand/20'
+            }`}
+          >
+            <UploadCloud className="w-8 h-8 text-charcoal/40 mb-2" />
+            <p className="text-xs font-sans font-medium text-charcoal/80 text-center">
+              Click or Drag & Drop photo here
+            </p>
+            <p className="text-[10px] font-sans text-charcoal-muted mt-0.5">
+              JPG, PNG, WEBP supported
+            </p>
+          </div>
+
+          {/* Alternative URL Input */}
+          <div className="mt-2 flex items-center justify-between text-[11px] font-sans text-charcoal/70">
+            {isEnteringUrl ? (
+              <form onSubmit={handleUrlSubmit} className="flex gap-2 w-full mt-1">
+                <input
+                  type="url"
+                  placeholder="Paste direct image link (https://...)"
+                  value={urlInput}
+                  onChange={(e) => setUrlInput(e.target.value)}
+                  className="flex-1 px-2.5 py-1.5 text-xs bg-white border border-charcoal/20 rounded focus:outline-none focus:border-copper"
+                />
+                <button
+                  type="submit"
+                  className="px-3 py-1.5 bg-copper text-white text-xs rounded hover:bg-copper-dark flex items-center gap-1 font-bold"
+                >
+                  <Check className="w-3 h-3" /> Set
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsEnteringUrl(false)}
+                  className="px-2 py-1.5 bg-charcoal/10 text-charcoal text-xs rounded hover:bg-charcoal/20"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </form>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setIsEnteringUrl(true)}
+                className="inline-flex items-center gap-1 text-copper hover:underline text-[11px] font-medium"
+              >
+                <Link className="w-3 h-3" /> Or paste image URL
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        onChange={(e) => {
+          if (e.target.files && e.target.files[0]) {
+            handleFile(e.target.files[0])
+          }
+        }}
+        className="hidden"
+      />
+    </div>
+  )
+}

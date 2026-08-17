@@ -1,11 +1,11 @@
 import React from 'react'
 import { motion } from 'framer-motion'
-import { Facebook, MessageSquare, MapPin } from 'lucide-react'
+import { Facebook, MessageSquare, MapPin, Lock } from 'lucide-react'
 import { contact, getWhatsAppLink, brand } from '../data/content'
 import Logo from './Logo'
 import { fadeUp, staggerContainer } from '../lib/motion'
 
-export default function Footer() {
+export default function Footer({ onOpenAdmin }) {
   return (
     <footer className="bg-[#FAF8F5] text-charcoal py-14 sm:py-16 md:py-20 border-t border-charcoal/10 overflow-hidden select-none">
       <motion.div
@@ -96,11 +96,19 @@ export default function Footer() {
           </p>
         </motion.div>
 
-        {/* Copyright Line */}
-        <motion.div variants={fadeUp} className="border-t border-charcoal/10 pt-6 sm:pt-8 text-[10px] sm:text-[11px] text-charcoal-muted font-sans tracking-wide">
-          <p>
+        {/* Copyright Line + Discreet Owner Login Trigger */}
+        <motion.div variants={fadeUp} className="border-t border-charcoal/10 pt-6 sm:pt-8 flex items-center justify-center gap-3 text-[10px] sm:text-[11px] text-charcoal-muted font-sans tracking-wide">
+          <span>
             Copyright &copy; {new Date().getFullYear()} Tilnogz Photography. All Rights Reserved.
-          </p>
+          </span>
+          <button
+            type="button"
+            onClick={onOpenAdmin}
+            title="Owner Dashboard Access"
+            className="text-charcoal/30 hover:text-copper transition-colors p-1"
+          >
+            <Lock className="w-3 h-3" />
+          </button>
         </motion.div>
       </motion.div>
     </footer>

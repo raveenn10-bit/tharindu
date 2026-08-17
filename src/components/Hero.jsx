@@ -1,7 +1,12 @@
 import React from 'react'
 import { motion } from 'framer-motion'
+import { useContent } from '../context/ContentContext'
 
 export default function Hero() {
+  const { content } = useContent()
+  const desktopImg = content?.hero?.desktopImage || '/photos/hero.png'
+  const mobileImg = content?.hero?.mobileImage || '/photos/hero-mobile.png'
+
   return (
     <section className="relative min-h-[100dvh] min-h-[100svh] w-full overflow-hidden bg-paper select-none">
       {/* Full-Bleed Responsive Hero Photograph with Mobile/Portrait Support */}
@@ -15,16 +20,16 @@ export default function Hero() {
           {/* Mobile and Portrait Orientation */}
           <source
             media="(max-width: 768px), (orientation: portrait)"
-            srcSet="/photos/hero-mobile.png"
+            srcSet={mobileImg}
           />
           {/* Desktop and Landscape Orientation */}
           <source
             media="(min-width: 769px) and (orientation: landscape)"
-            srcSet="/photos/hero.png"
+            srcSet={desktopImg}
           />
           {/* Fallback Image */}
           <img
-            src="/photos/hero.png"
+            src={desktopImg}
             alt="Tilnogz Photography - Tharindu Lakshan"
             className="w-full h-full object-cover object-[center_top]"
             loading="eager"

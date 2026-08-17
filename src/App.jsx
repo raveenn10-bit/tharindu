@@ -1,4 +1,5 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
+import { ContentProvider, useContent } from './context/ContentContext'
 import Navbar from './components/Navbar'
 import Hero from './components/Hero'
 import About from './components/About'
@@ -10,16 +11,64 @@ import Footer from './components/Footer'
 import CustomCursor from './components/CustomCursor'
 import WhatsAppFloatingButton from './components/WhatsAppFloatingButton'
 import ProjectModal from './components/ProjectModal'
-import { featured } from './data/portfolio'
+import AdminLogin from './components/admin/AdminLogin'
+import AdminDashboard from './components/admin/AdminDashboard'
 
-export default function App() {
+function MainSite() {
+  const { content, isAuthenticated } = useContent()
+  const albums = content?.albums || []
+
   const [selectedProject, setSelectedProject] = useState(null)
   const [currentIndex, setCurrentIndex] = useState(0)
+
+  // Admin state
+  const [isAdminLoginOpen, setIsAdminLoginOpen] = useState(false)
+  const [isAdminDashboardOpen, setIsAdminDashboardOpen] = useState(false)
+
+  // Listen for #admin hash and keyboard shortcut (Ctrl+Shift+A)
+  useEffect(() => {
+    const handleHash = () => {
+      if (window.location.hash === '#admin') {
+        if (isAuthenticated) {
+          setIsAdminDashboardOpen(true)
+        } else {
+          setIsAdminLoginOpen(true)
+        }
+      }
+    }
+
+    const handleKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'a') {
+        e.preventDefault()
+        if (isAuthenticated) {
+          setIsAdminDashboardOpen(true)
+        } else {
+          setIsAdminLoginOpen(true)
+        }
+      }
+    }
+
+    handleHash()
+    window.addEventListener('hashchange', handleHash)
+    window.addEventListener('keydown', handleKeyDown)
+    return () => {
+      window.removeEventListener('hashchange', handleHash)
+      window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [isAuthenticated])
+
+  const handleOpenAdmin = () => {
+    if (isAuthenticated) {
+      setIsAdminDashboardOpen(true)
+    } else {
+      setIsAdminLoginOpen(true)
+    }
+  }
 
   // Open modal with specific project and set its index for prev/next
   const handleOpenProject = (project) => {
     setSelectedProject(project)
-    const idx = featured.findIndex((p) => p.id === project.id || p.title === project.title)
+    const idx = albums.findIndex((p) => p.id === project.id || p.title === project.title)
     if (idx !== -1) setCurrentIndex(idx)
   }
 
@@ -28,15 +77,17 @@ export default function App() {
   }
 
   const handlePrev = () => {
-    const nextIdx = (currentIndex - 1 + featured.length) % featured.length
+    if (!albums.length) return
+    const nextIdx = (currentIndex - 1 + albums.length) % albums.length
     setCurrentIndex(nextIdx)
-    setSelectedProject(featured[nextIdx])
+    setSelectedProject(albums[nextIdx])
   }
 
   const handleNext = () => {
-    const nextIdx = (currentIndex + 1) % featured.length
+    if (!albums.length) return
+    const nextIdx = (currentIndex + 1) % albums.length
     setCurrentIndex(nextIdx)
-    setSelectedProject(featured[nextIdx])
+    setSelectedProject(albums[nextIdx])
   }
 
   return (
@@ -71,8 +122,8 @@ export default function App() {
         <FullWidthPhotoStrip onOpenProject={handleOpenProject} />
       </main>
 
-      {/* 7. Centered Colophon & Footer */}
-      <Footer />
+      {/* 7. Centered Colophon & Footer with discreet Admin lock trigger */}
+      <Footer onOpenAdmin={handleOpenAdmin} />
 
       {/* Fullscreen Interactive Project Detail Modal */}
       {selectedProject && (
@@ -83,6 +134,35 @@ export default function App() {
           onNext={handleNext}
         />
       )}
+
+      {/* Owner Login Modal */}
+      <AdminLogin
+        isOpen={isAdminLoginOpen}
+        onClose={() => setIsAdminLoginOpen(false)}
+        onSuccess={() => {
+          setIsAdminLoginOpen(false)
+          setIsAdminDashboardOpen(true)
+        }}
+      />
+
+      {/* Owner Admin Dashboard Overlay */}
+      <AdminDashboard
+        isOpen={isAdminDashboardOpen}
+        onClose={() => {
+          setIsAdminDashboardOpen(false)
+          if (window.location.hash === '#admin') {
+            window.history.replaceState(null, null, ' ')
+          }
+        }}
+      />
     </div>
+  )
+}
+
+export default function App() {
+  return (
+    <ContentProvider>
+      <MainSite />
+    </ContentProvider>
   )
 }

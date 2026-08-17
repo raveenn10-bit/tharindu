@@ -1,0 +1,93 @@
+import React, { useState } from 'react'
+import { motion } from 'framer-motion'
+import { Lock, KeyRound, ArrowRight, X, AlertCircle } from 'lucide-react'
+import { useContent } from '../../context/ContentContext'
+
+export default function AdminLogin({ isOpen, onClose, onSuccess }) {
+  const { login } = useContent()
+  const [passcode, setPasscode] = useState('')
+  const [error, setError] = useState('')
+
+  if (!isOpen) return null
+
+  const handleSubmit = (e) => {
+    e.preventDefault()
+    setError('')
+    const res = login(passcode)
+    if (res.success) {
+      setPasscode('')
+      if (onSuccess) onSuccess()
+    } else {
+      setError(res.error || 'Access denied')
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-charcoal/80 backdrop-blur-md">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95, y: 10 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95, y: 10 }}
+        className="w-full max-w-md bg-white rounded-2xl shadow-2xl border border-charcoal/10 overflow-hidden relative"
+      >
+        {/* Close button */}
+        <button
+          type="button"
+          onClick={onClose}
+          className="absolute top-4 right-4 p-2 text-charcoal/40 hover:text-charcoal transition-colors rounded-full hover:bg-sand/40"
+        >
+          <X className="w-5 h-5" />
+        </button>
+
+        {/* Modal Header */}
+        <div className="bg-[#FAF8F5] p-6 sm:p-8 text-center border-b border-charcoal/10">
+          <div className="w-12 h-12 rounded-2xl bg-charcoal text-copper mx-auto flex items-center justify-center mb-3 shadow-md">
+            <Lock className="w-6 h-6" />
+          </div>
+          <h3 className="font-serif text-xl sm:text-2xl text-charcoal font-bold tracking-tight uppercase">
+            Owner Access
+          </h3>
+          <p className="text-xs text-charcoal-muted font-sans mt-1">
+            Tilnogz Photography Content Management Panel
+          </p>
+        </div>
+
+        {/* Form Body */}
+        <form onSubmit={handleSubmit} className="p-6 sm:p-8 space-y-4">
+          {error && (
+            <div className="p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 text-xs text-red-700 font-sans">
+              <AlertCircle className="w-4 h-4 flex-shrink-0" />
+              <span>{error}</span>
+            </div>
+          )}
+
+          <div className="space-y-1.5">
+            <label className="block text-xs font-sans font-semibold text-charcoal/80 uppercase tracking-wider">
+              Enter Owner Passcode
+            </label>
+            <div className="relative">
+              <KeyRound className="w-4 h-4 text-charcoal/40 absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <input
+                type="password"
+                required
+                autoFocus
+                value={passcode}
+                onChange={(e) => setPasscode(e.target.value)}
+                placeholder="••••••••••••"
+                className="w-full pl-10 pr-4 py-3 bg-[#FAF8F5] border border-charcoal/20 rounded-xl text-sm font-sans text-charcoal focus:outline-none focus:border-copper focus:bg-white transition-colors"
+              />
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            className="w-full py-3.5 bg-charcoal hover:bg-copper text-white text-xs font-sans font-bold tracking-widest uppercase rounded-xl transition-colors flex items-center justify-center gap-2 shadow-md"
+          >
+            <span>Unlock Dashboard</span>
+            <ArrowRight className="w-4 h-4" />
+          </button>
+        </form>
+      </motion.div>
+    </div>
+  )
+}

@@ -2,6 +2,7 @@ import React from 'react'
 import { motion } from 'framer-motion'
 import { MapPin, Heart, Sparkles, GraduationCap, Car, Trophy } from 'lucide-react'
 import { getWhatsAppLink } from '../data/content'
+import { useContent } from '../context/ContentContext'
 
 const servicesData = [
   {
@@ -37,6 +38,19 @@ const servicesData = [
 ]
 
 export default function About() {
+  const { content } = useContent()
+  const about = content?.about || {}
+
+  const portrait = about.portraitImage || '/photos/tharindu-portrait.png'
+  const name = about.name || 'Tharindu Lakshan'
+  const address = about.address || 'Colombo 7, Sri Lanka'
+  const bio1 =
+    about.bio1 ||
+    "I’m Tharindu Lakshan, An Artist. A Photographer. Based at Colombo 7, the photographer in me finds decisive moments everywhere — across love stories, academic triumphs, high-velocity sports, and automotive precision."
+  const bio2 =
+    about.bio2 ||
+    "My approach to photography across Sri Lanka is deeply personal. A shoot is made up of hundreds of intimate interactions, bursting with matchless emotions. I capture these precious moments and craft them into your very own story."
+
   return (
     <section id="about" className="py-16 sm:py-24 md:py-32 bg-white relative overflow-hidden select-none">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -52,8 +66,8 @@ export default function About() {
             <div className="relative mx-auto max-w-xs sm:max-w-sm md:max-w-md lg:max-w-none w-full">
               <div className="rounded-2xl overflow-hidden bg-gradient-to-b from-[#F5F3EE] to-white p-3 sm:p-5 border border-charcoal/10 shadow-[0_12px_40px_rgba(0,0,0,0.06)] flex justify-center">
                 <img
-                  src="/photos/tharindu-portrait.png"
-                  alt="Tharindu Lakshan - Tilnogz Photography"
+                  src={portrait}
+                  alt={`${name} - Tilnogz Photography`}
                   className="w-auto max-h-[380px] sm:max-h-[480px] md:max-h-[540px] object-contain drop-shadow-[0_10px_20px_rgba(0,0,0,0.12)] hover:scale-105 transition-transform duration-700"
                   loading="lazy"
                   decoding="async"
@@ -77,7 +91,7 @@ export default function About() {
             {/* Address Badge */}
             <div className="flex items-center gap-1.5 text-copper font-sans font-semibold text-xs tracking-wider uppercase mb-5">
               <MapPin className="w-4 h-4" />
-              <span>Address: Colombo 7, Sri Lanka</span>
+              <span>Address: {address}</span>
             </div>
 
             {/* 5 Services Badges Grid */}
@@ -106,12 +120,8 @@ export default function About() {
             </div>
 
             <div className="space-y-3 sm:space-y-4 text-charcoal/80 font-body text-xs sm:text-sm md:text-base leading-relaxed mb-6 sm:mb-8">
-              <p>
-                I’m <strong className="text-charcoal font-semibold">Tharindu Lakshan</strong>, An Artist. A Photographer. Based at <strong className="text-charcoal font-medium">Colombo 7</strong>, the photographer in me finds decisive moments everywhere — across love stories, academic triumphs, high-velocity sports, and automotive precision.
-              </p>
-              <p>
-                My approach to photography across Sri Lanka is deeply personal. A shoot is made up of hundreds of intimate interactions, bursting with matchless emotions. I capture these precious moments and craft them into your very own story.
-              </p>
+              <p>{bio1}</p>
+              <p>{bio2}</p>
             </div>
 
             {/* More CTA Button */}
