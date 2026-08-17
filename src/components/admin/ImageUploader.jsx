@@ -5,9 +5,9 @@ import { uploadPhotoToStorage } from '../../lib/supabaseClient'
 export default function ImageUploader({
   value,
   onChange,
-  label = 'Upload Photo',
+  label = 'Upload Media',
   aspectRatio = 'aspect-[4/3]',
-  acceptMedia = 'image/*',
+  acceptMedia = 'image/*,video/*',
 }) {
   const fileInputRef = useRef(null)
   const [urlInput, setUrlInput] = useState('')
@@ -15,6 +15,14 @@ export default function ImageUploader({
   const [dragOver, setDragOver] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
   const [uploadError, setUploadError] = useState('')
+
+  const isVideo =
+    value &&
+    (value.endsWith('.mp4') ||
+      value.endsWith('.webm') ||
+      value.endsWith('.mov') ||
+      value.includes('video') ||
+      value.includes('.mp4'))
 
   const handleFile = async (file) => {
     if (!file) return
@@ -77,14 +85,32 @@ export default function ImageUploader({
       )}
 
       {isUploading ? (
-        <div className={`${aspectRatio} w-full rounded-xl border-2 border-copper/40 bg-copper/5 flex flex-col items-center justify-center`}>
+        <div
+          className={`${aspectRatio} w-full rounded-xl border-2 border-copper/40 bg-copper/5 flex flex-col items-center justify-center`}
+        >
           <Loader2 className="w-8 h-8 text-copper animate-spin mb-2" />
-          <span className="text-xs font-sans font-bold text-copper">Uploading to Supabase Storage...</span>
+          <span className="text-xs font-sans font-bold text-copper">
+            Uploading to Supabase Storage...
+          </span>
         </div>
       ) : value ? (
         <div className="relative group rounded-xl overflow-hidden border border-charcoal/15 bg-sand/30">
-          <div className={`${aspectRatio} w-full overflow-hidden flex items-center justify-center bg-charcoal/5`}>
-            <img src={value} alt="Photo Preview" className="w-full h-full object-cover object-center" />
+          <div
+            className={`${aspectRatio} w-full overflow-hidden flex items-center justify-center bg-charcoal/5`}
+          >
+            {isVideo ? (
+              <video
+                src={value}
+                controls
+                className="w-full h-full object-cover object-center"
+              />
+            ) : (
+              <img
+                src={value}
+                alt="Media Preview"
+                className="w-full h-full object-cover object-center"
+              />
+            )}
           </div>
           <div className="absolute inset-0 bg-charcoal/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
             <button
@@ -98,7 +124,7 @@ export default function ImageUploader({
               type="button"
               onClick={() => onChange('')}
               className="p-1.5 bg-red-600 text-white rounded shadow hover:bg-red-700 transition-colors"
-              title="Remove Photo"
+              title="Remove Media"
             >
               <X className="w-4 h-4" />
             </button>
@@ -115,15 +141,17 @@ export default function ImageUploader({
             onDrop={handleDrop}
             onClick={() => fileInputRef.current?.click()}
             className={`border-2 border-dashed rounded-xl ${aspectRatio} flex flex-col items-center justify-center p-4 cursor-pointer transition-all ${
-              dragOver ? 'border-copper bg-copper/5 scale-[0.99]' : 'border-charcoal/20 bg-[#FAF8F5] hover:border-copper/50 hover:bg-sand/20'
+              dragOver
+                ? 'border-copper bg-copper/5 scale-[0.99]'
+                : 'border-charcoal/20 bg-[#FAF8F5] hover:border-copper/50 hover:bg-sand/20'
             }`}
           >
             <UploadCloud className="w-8 h-8 text-charcoal/40 mb-2" />
             <p className="text-xs font-sans font-medium text-charcoal/80 text-center">
-              Click or Drag & Drop photo here
+              Click or Drag & Drop photo / video here
             </p>
             <p className="text-[10px] font-sans text-charcoal-muted mt-0.5">
-              JPG, PNG, WEBP supported
+              JPG, PNG, WEBP, MP4, MOV supported
             </p>
           </div>
 
@@ -137,7 +165,7 @@ export default function ImageUploader({
               <form onSubmit={handleUrlSubmit} className="flex gap-2 w-full mt-1">
                 <input
                   type="url"
-                  placeholder="Paste direct URL (https://...)"
+                  placeholder="Paste direct URL (https://... or /videos/...)"
                   value={urlInput}
                   onChange={(e) => setUrlInput(e.target.value)}
                   className="flex-1 px-2.5 py-1.5 text-xs bg-white border border-charcoal/20 rounded focus:outline-none focus:border-copper"
@@ -162,7 +190,7 @@ export default function ImageUploader({
                 onClick={() => setIsEnteringUrl(true)}
                 className="inline-flex items-center gap-1 text-copper hover:underline text-[11px] font-medium"
               >
-                <Link className="w-3 h-3" /> Or paste photo URL
+                <Link className="w-3 h-3" /> Or paste media URL
               </button>
             )}
           </div>

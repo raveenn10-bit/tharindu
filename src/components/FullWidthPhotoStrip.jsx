@@ -53,43 +53,46 @@ export default function FullWidthPhotoStrip({ onOpenProject }) {
             },
           }}
         >
-          {infiniteStrip.map((item) => (
-            <div
-              key={item.uniqueKey}
-              onClick={() =>
-                onOpenProject &&
-                onOpenProject({
-                  title: item.title,
-                  category: item.category,
-                  image: item.image,
-                  location: 'Sri Lanka',
-                  note: 'High-resolution photographic capture from the Tilnogz Photography archive.',
-                })
-              }
-              className="flex-shrink-0 w-44 sm:w-56 md:w-72 lg:w-80 aspect-[2/3] overflow-hidden group relative bg-charcoal"
-            >
-              <img
-                src={item.image.src}
-                alt={item.title}
-                className="w-full h-full object-cover object-center group-hover:scale-105 group-hover:opacity-85 transition-all duration-700 ease-out pointer-events-none"
-                loading="lazy"
-                decoding="async"
-              />
+          {infiniteStrip.map((item) => {
+            const imgSrc = typeof item.image === 'string' ? item.image : item.image?.src || ''
+            return (
+              <div
+                key={item.uniqueKey}
+                onClick={() =>
+                  onOpenProject &&
+                  onOpenProject({
+                    title: item.title,
+                    category: item.category,
+                    image: imgSrc,
+                    location: 'Sri Lanka',
+                    note: 'High-resolution photographic capture from the Tilnogz Photography archive.',
+                  })
+                }
+                className="flex-shrink-0 w-44 sm:w-56 md:w-72 lg:w-80 aspect-[2/3] overflow-hidden group relative bg-charcoal"
+              >
+                <img
+                  src={imgSrc}
+                  alt={item.title}
+                  className="w-full h-full object-cover object-center group-hover:scale-105 group-hover:opacity-85 transition-all duration-700 ease-out pointer-events-none"
+                  loading="lazy"
+                  decoding="async"
+                />
 
-              {/* Hoverer Caption Overlay */}
-              <div className="absolute inset-0 bg-gradient-to-t from-charcoal/85 via-charcoal/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4 sm:p-5 text-paper">
-                <span className="text-[10px] font-sans font-bold tracking-widest text-copper-light uppercase mb-1">
-                  {item.category}
-                </span>
-                <span className="font-sans font-bold text-xs sm:text-sm text-white uppercase block">
-                  {item.title}
-                </span>
-                <span className="text-[10px] sm:text-[11px] text-paper/80 font-sans tracking-wide mt-1">
-                  Click to inspect frame →
-                </span>
+                {/* Hoverer Caption Overlay */}
+                <div className="absolute inset-0 bg-gradient-to-t from-charcoal/85 via-charcoal/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4 sm:p-5 text-paper">
+                  <span className="text-[10px] font-sans font-bold tracking-widest text-copper-light uppercase mb-1">
+                    {item.category}
+                  </span>
+                  <span className="font-sans font-bold text-xs sm:text-sm text-white uppercase block">
+                    {item.title}
+                  </span>
+                  <span className="text-[10px] sm:text-[11px] text-paper/80 font-sans tracking-wide mt-1">
+                    Click to inspect frame →
+                  </span>
+                </div>
               </div>
-            </div>
-          ))}
+            )
+          })}
         </motion.div>
       </div>
     </section>

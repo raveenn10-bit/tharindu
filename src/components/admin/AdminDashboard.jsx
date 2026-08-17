@@ -28,10 +28,18 @@ import {
   ShieldCheck,
   Video,
   Shuffle,
+  AlertTriangle,
+  Info,
+  Film,
 } from 'lucide-react'
 import { useContent } from '../../context/ContentContext'
 import { getSupabaseConfig, saveSupabaseConfig } from '../../lib/supabase'
 import ImageUploader from './ImageUploader'
+
+// Maximum Limits as requested
+const MAX_VISIBLE_PHOTOS = 45
+const MAX_VISIBLE_VIDEOS = 3
+const MAX_VISIBLE_TESTIMONIALS = 3
 
 export default function AdminDashboard({ isOpen, onClose }) {
   const {
@@ -46,6 +54,10 @@ export default function AdminDashboard({ isOpen, onClose }) {
     togglePublishAlbum,
     reorderAlbums,
     shuffleAlbums,
+    addVideo,
+    removeVideo,
+    updateVideo,
+    togglePublishVideo,
     addTestimonial,
     removeTestimonial,
     updateTestimonial,
@@ -56,10 +68,16 @@ export default function AdminDashboard({ isOpen, onClose }) {
     saveSupabaseCredentials,
   } = useContent()
 
-  const [activeTab, setActiveTab] = useState('albums')
+  const [activeTab, setActiveTab] = useState('albums') // 'albums' | 'videos' | 'hero' | 'about' | 'testimonials' | 'database'
   const [toastMessage, setToastMessage] = useState('')
+
+  // Modal / Form States
   const [isAddingAlbum, setIsAddingAlbum] = useState(false)
   const [editingAlbum, setEditingAlbum] = useState(null)
+
+  const [isAddingVideo, setIsAddingVideo] = useState(false)
+  const [editingVideo, setEditingVideo] = useState(null)
+
   const [isAddingTestimonial, setIsAddingTestimonial] = useState(false)
   const [editingTestimonial, setEditingTestimonial] = useState(null)
 
@@ -68,13 +86,35 @@ export default function AdminDashboard({ isOpen, onClose }) {
   const [supabaseUrl, setSupabaseUrl] = useState(getSupabaseConfig().url)
   const [supabaseKey, setSupabaseKey] = useState(getSupabaseConfig().anonKey)
 
+  // Local Hero Form State
+  const [heroForm, setHeroForm] = useState({
+    desktop: content?.hero?.desktopImage || '/photos/hero.png',
+    mobile: content?.hero?.mobileImage || '/photos/hero-mobile.png',
+  })
+
+  // Local About Form State
+  const [aboutForm, setAboutForm] = useState({
+    name: content?.about?.name || 'Tharindu Lakshan',
+    address: content?.about?.address || 'Colombo 7, Sri Lanka',
+    bio1: content?.about?.bio1 || '',
+    bio2: content?.about?.bio2 || '',
+    portraitImage: content?.about?.portraitImage || '/photos/tharindu-portrait.png',
+  })
+
   // New Album Form State
   const [newAlbum, setNewAlbum] = useState({
     title: '',
     category: 'Wedding Photography',
     image: '',
-    video_url: '',
     note: '',
+  })
+
+  // New Video Form State
+  const [newVideo, setNewVideo] = useState({
+    title: '',
+    category: 'Pre-Wedding / Wedding Cinematography',
+    video_url: '',
+    description: '',
   })
 
   // New Testimonial Form State
@@ -93,10 +133,16 @@ export default function AdminDashboard({ isOpen, onClose }) {
     setTimeout(() => setToastMessage(''), 3000)
   }
 
+  // Published counts for limits
+  const publishedPhotosCount = (content?.albums || []).filter((a) => a.is_published !== false).length
+  const publishedVideosCount = (content?.videos || []).filter((v) => v.is_published !== false).length
+  const publishedTestimonialsCount = (content?.testimonials || []).filter((t) => t.is_published !== false).length
+
+  // --- Handlers for Albums ---
   const handleCreateAlbum = (e) => {
     e.preventDefault()
     if (!newAlbum.title || !newAlbum.image) {
-      alert('Please provide an album title and upload a photo.')
+      alert('Please provide a title and upload a photo.')
       return
     }
     addAlbum(newAlbum)
@@ -104,11 +150,10 @@ export default function AdminDashboard({ isOpen, onClose }) {
       title: '',
       category: 'Wedding Photography',
       image: '',
-      video_url: '',
       note: '',
     })
     setIsAddingAlbum(false)
-    showToast('Album created and published!')
+    showToast('Photo uploaded and published!')
   }
 
   const handleSaveEditedAlbum = (e) => {
@@ -116,9 +161,51 @@ export default function AdminDashboard({ isOpen, onClose }) {
     if (!editingAlbum) return
     updateAlbum(editingAlbum.id, editingAlbum)
     setEditingAlbum(null)
-    showToast('Album details updated!')
+    showToast('Photo details updated!')
   }
 
+  const handleMoveAlbum = (index, direction) => {
+    const list = [...content.albums]
+    const targetIdx = index + direction
+    if (targetIdx < 0 || targetIdx >= list.length) return
+    const temp = list[index]
+    list[index] = list[targetIdx]
+    list[targetIdx] = temp
+    reorderAlbums(list)
+    showToast('Order updated!')
+  }
+
+  // --- Handlers for Videos ---
+  const handleCreateVideo = (e) => {
+    e.preventDefault()
+    if (!newVideo.title || !newVideo.video_url) {
+      alert('Please provide a video title and upload or paste a video URL.')
+      return
+    }
+    if (addVideo) {
+      addVideo(newVideo)
+    }
+    setNewVideo({
+      title: '',
+      category: 'Pre-Wedding / Wedding Cinematography',
+      video_url: '',
+      description: '',
+    })
+    setIsAddingVideo(false)
+    showToast('Video added to Cinematography section!')
+  }
+
+  const handleSaveEditedVideo = (e) => {
+    e.preventDefault()
+    if (!editingVideo) return
+    if (updateVideo) {
+      updateVideo(editingVideo.id, editingVideo)
+    }
+    setEditingVideo(null)
+    showToast('Video details updated!')
+  }
+
+  // --- Handlers for Testimonials ---
   const handleCreateTestimonial = (e) => {
     e.preventDefault()
     if (!newTestimonial.clientName || !newTestimonial.review || !newTestimonial.image) {
@@ -145,89 +232,70 @@ export default function AdminDashboard({ isOpen, onClose }) {
     showToast('Testimonial updated!')
   }
 
-  const handleMoveAlbum = (index, direction) => {
-    const list = [...content.albums]
-    const targetIdx = index + direction
-    if (targetIdx < 0 || targetIdx >= list.length) return
-    const temp = list[index]
-    list[index] = list[targetIdx]
-    list[targetIdx] = temp
-    reorderAlbums(list)
-    showToast('Order updated!')
+  // --- Handlers for Hero & About ---
+  const handleSaveHero = (e) => {
+    e.preventDefault()
+    updateHeroImages(heroForm)
+    showToast('Hero images updated successfully!')
+  }
+
+  const handleSaveAbout = (e) => {
+    e.preventDefault()
+    updateAbout(aboutForm)
+    showToast('About section updated successfully!')
   }
 
   const handleSaveDbSettings = (e) => {
     e.preventDefault()
-    saveSupabaseCredentials(supabaseUrl.trim(), supabaseKey.trim())
+    saveSupabaseConfig(supabaseUrl, supabaseKey)
+    if (saveSupabaseCredentials) {
+      saveSupabaseCredentials(supabaseUrl, supabaseKey)
+    }
+    showToast('Supabase settings updated & reconnecting...')
     setShowDbConfig(false)
-    showToast('Supabase database settings saved!')
   }
 
   return (
-    <div className="fixed inset-0 z-[110] bg-charcoal/90 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 md:p-6 overflow-hidden">
-      {/* Toast Notification */}
-      {toastMessage && (
-        <div className="fixed top-6 right-6 z-[150] bg-copper text-white text-xs font-sans font-bold px-4 py-3 rounded-xl shadow-2xl flex items-center gap-2 animate-bounce">
-          <CheckCircle2 className="w-4 h-4" />
-          <span>{toastMessage}</span>
-        </div>
-      )}
-
+    <div className="fixed inset-0 z-[120] flex items-center justify-center p-2 sm:p-4 md:p-6 bg-charcoal/85 backdrop-blur-lg select-none">
       <motion.div
-        initial={{ opacity: 0, scale: 0.98 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.98 }}
-        className="w-full max-w-6xl h-[94vh] bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-charcoal/15"
+        initial={{ opacity: 0, scale: 0.96, y: 15 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.96, y: 15 }}
+        className="w-full max-w-7xl h-[92vh] bg-white rounded-2xl md:rounded-3xl shadow-2xl border border-charcoal/15 flex flex-col overflow-hidden relative"
       >
-        {/* Top Header Bar */}
-        <div className="bg-[#FAF8F5] px-4 sm:px-6 py-4 border-b border-charcoal/10 flex items-center justify-between flex-shrink-0">
+        {/* ======================================================== */}
+        {/* Top Header Bar                                           */}
+        {/* ======================================================== */}
+        <header className="px-5 sm:px-8 py-4 bg-[#FAF8F5] border-b border-charcoal/10 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-charcoal text-copper flex items-center justify-center font-serif font-bold text-sm">
+            <div className="w-10 h-10 rounded-xl bg-charcoal text-copper flex items-center justify-center shadow-md font-serif font-bold text-lg">
               T
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="font-serif text-base sm:text-lg font-bold text-charcoal tracking-wide uppercase">
-                  Tilnogz Studio Manager
+                <h2 className="font-serif text-lg sm:text-xl font-bold text-charcoal tracking-tight uppercase">
+                  Tilnogz Owner Portal
                 </h2>
-                {supabaseStatus === 'connected' ? (
-                  <span className="flex items-center gap-1 text-[10px] text-emerald-700 bg-emerald-100 font-sans font-bold px-2 py-0.5 rounded-full">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse" />
-                    Supabase Connected
-                  </span>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => setShowDbConfig(true)}
-                    className="flex items-center gap-1 text-[10px] text-amber-800 bg-amber-100 font-sans font-bold px-2 py-0.5 rounded-full hover:bg-amber-200"
-                  >
-                    <Database className="w-3 h-3" /> Connect Supabase
-                  </button>
-                )}
+                <span className="text-[10px] font-sans font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300">
+                  Supabase Live
+                </span>
               </div>
-              <span className="text-[10px] font-sans text-charcoal-muted block">
-                Tharindu Lakshan · Colombo 7, Sri Lanka
-              </span>
+              <p className="text-xs text-charcoal-muted font-sans hidden sm:block">
+                Manage Photos, Videos, Hero, About & Testimonials
+              </p>
             </div>
           </div>
 
+          {/* Header Action Controls */}
           <div className="flex items-center gap-2 sm:gap-3">
             <button
               type="button"
-              onClick={() => setShowDbConfig(true)}
-              className="p-2 text-charcoal/60 hover:text-copper hover:bg-sand/40 rounded-lg transition-colors"
-              title="Database Settings"
+              onClick={exportConfig}
+              className="p-2 sm:px-3 sm:py-1.5 bg-white border border-charcoal/20 text-charcoal hover:bg-copper hover:text-white rounded-xl text-xs font-sans font-bold flex items-center gap-1.5 transition-colors shadow-sm"
+              title="Download JSON Backup"
             >
-              <Database className="w-4 h-4" />
-            </button>
-
-            <button
-              type="button"
-              onClick={onClose}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-sand hover:bg-sand-dark text-charcoal text-xs font-sans font-semibold rounded-lg transition-colors"
-            >
-              <ExternalLink className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">View Site</span>
+              <Download className="w-3.5 h-3.5" />
+              <span className="hidden md:inline">Backup</span>
             </button>
 
             <button
@@ -236,163 +304,166 @@ export default function AdminDashboard({ isOpen, onClose }) {
                 logout()
                 onClose()
               }}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-700 text-xs font-sans font-semibold rounded-lg transition-colors"
+              className="p-2 sm:px-3 sm:py-1.5 bg-white border border-red-200 text-red-600 hover:bg-red-600 hover:text-white rounded-xl text-xs font-sans font-bold flex items-center gap-1.5 transition-colors shadow-sm"
+              title="Log Out"
             >
               <LogOut className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Logout</span>
+              <span className="hidden sm:inline">Sign Out</span>
             </button>
 
             <button
               type="button"
               onClick={onClose}
-              className="p-1.5 text-charcoal/50 hover:text-charcoal rounded-lg hover:bg-charcoal/5 transition-colors"
+              className="p-2 text-charcoal/40 hover:text-charcoal rounded-full hover:bg-sand/40 transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
           </div>
+        </header>
+
+        {/* ======================================================== */}
+        {/* Capacity Limit Reminder Alert Banner                     */}
+        {/* ======================================================== */}
+        <div className="bg-sand/30 border-b border-charcoal/10 px-5 sm:px-8 py-2.5 flex flex-wrap items-center justify-between gap-3 text-xs font-sans">
+          <div className="flex items-center gap-2 text-charcoal">
+            <Info className="w-4 h-4 text-copper flex-shrink-0" />
+            <span className="font-medium">
+              <strong>Website Display Limits:</strong> Max 45 Images in Album Grid · Max 3 Videos in Cinematography · Max 3 Testimonials
+            </span>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <span
+              className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
+                publishedPhotosCount > MAX_VISIBLE_PHOTOS
+                  ? 'bg-amber-100 text-amber-900 border border-amber-300'
+                  : 'bg-white text-charcoal border border-charcoal/15'
+              }`}
+            >
+              Images: {publishedPhotosCount}/{MAX_VISIBLE_PHOTOS}
+            </span>
+            <span
+              className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
+                publishedVideosCount > MAX_VISIBLE_VIDEOS
+                  ? 'bg-amber-100 text-amber-900 border border-amber-300'
+                  : 'bg-white text-charcoal border border-charcoal/15'
+              }`}
+            >
+              Videos: {publishedVideosCount}/{MAX_VISIBLE_VIDEOS}
+            </span>
+            <span
+              className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
+                publishedTestimonialsCount > MAX_VISIBLE_TESTIMONIALS
+                  ? 'bg-amber-100 text-amber-900 border border-amber-300'
+                  : 'bg-white text-charcoal border border-charcoal/15'
+              }`}
+            >
+              Reviews: {publishedTestimonialsCount}/{MAX_VISIBLE_TESTIMONIALS}
+            </span>
+          </div>
         </div>
 
-        {/* Database Config Modal */}
-        {showDbConfig && (
-          <div className="fixed inset-0 z-[160] bg-charcoal/80 flex items-center justify-center p-4">
-            <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-charcoal/15 space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Database className="w-5 h-5 text-copper" />
-                  <h3 className="font-serif text-lg font-bold text-charcoal">Supabase Credentials</h3>
-                </div>
-                <button type="button" onClick={() => setShowDbConfig(false)} className="text-charcoal/40 hover:text-charcoal">
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-
-              <p className="text-xs text-charcoal-muted font-sans leading-relaxed">
-                Connect your Supabase project URL and Anon Key to enable live cloud database storage and sync.
-              </p>
-
-              <form onSubmit={handleSaveDbSettings} className="space-y-3">
-                <div>
-                  <label className="block text-xs font-sans font-bold text-charcoal uppercase mb-1">Project URL</label>
-                  <input
-                    type="url"
-                    value={supabaseUrl}
-                    onChange={(e) => setSupabaseUrl(e.target.value)}
-                    placeholder="https://xyzcompany.supabase.co"
-                    className="w-full px-3 py-2 text-xs bg-[#FAF8F5] border border-charcoal/20 rounded-lg focus:outline-none focus:border-copper font-mono"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-sans font-bold text-charcoal uppercase mb-1">Anon Public Key</label>
-                  <input
-                    type="password"
-                    value={supabaseKey}
-                    onChange={(e) => setSupabaseKey(e.target.value)}
-                    placeholder="eyJhbGciOi..."
-                    className="w-full px-3 py-2 text-xs bg-[#FAF8F5] border border-charcoal/20 rounded-lg focus:outline-none focus:border-copper font-mono"
-                  />
-                </div>
-
-                <div className="pt-2 flex gap-2">
-                  <button
-                    type="submit"
-                    className="flex-1 py-2.5 bg-copper text-white text-xs font-sans font-bold rounded-lg hover:bg-copper-dark transition-colors"
-                  >
-                    Save & Connect
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      saveSupabaseCredentials('', '')
-                      setSupabaseUrl('')
-                      setSupabaseKey('')
-                      setShowDbConfig(false)
-                      showToast('Switched to local offline mode')
-                    }}
-                    className="px-3 py-2.5 bg-charcoal/10 text-charcoal text-xs font-sans font-medium rounded-lg hover:bg-charcoal/20"
-                  >
-                    Clear
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
-
-        {/* Main Body Area: Sidebar + Content */}
+        {/* ======================================================== */}
+        {/* Main Body (Sidebar Tabs + Content Workspace)            */}
+        {/* ======================================================== */}
         <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
-          {/* Sidebar Tabs */}
-          <div className="w-full md:w-64 bg-[#F7F5F0] border-r border-charcoal/10 p-3 sm:p-4 flex md:flex-col gap-1 overflow-x-auto flex-shrink-0">
+          {/* Navigation Sidebar */}
+          <aside className="w-full md:w-64 bg-[#FAF8F5] border-r border-charcoal/10 p-3 sm:p-4 flex md:flex-col gap-1.5 overflow-x-auto md:overflow-y-auto flex-shrink-0">
             <button
               type="button"
               onClick={() => setActiveTab('albums')}
-              className={`flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs font-sans font-bold uppercase tracking-wider transition-all whitespace-nowrap ${
-                activeTab === 'albums' ? 'bg-charcoal text-white shadow-sm' : 'text-charcoal/70 hover:bg-sand/60'
+              className={`flex-1 md:flex-none px-4 py-3 rounded-xl text-xs font-sans font-bold uppercase tracking-wider flex items-center justify-between transition-all ${
+                activeTab === 'albums'
+                  ? 'bg-charcoal text-white shadow-md'
+                  : 'text-charcoal hover:bg-sand/40 hover:text-copper'
               }`}
             >
-              <Layers className="w-4 h-4 text-copper" />
-              <span>Albums ({content.albums.length})</span>
+              <div className="flex items-center gap-2.5">
+                <Image className="w-4 h-4" />
+                <span>Albums ({content?.albums?.length || 0})</span>
+              </div>
+              <span className={`text-[10px] px-2 py-0.5 rounded-full ${activeTab === 'albums' ? 'bg-white/20 text-white' : 'bg-charcoal/10 text-charcoal'}`}>
+                {publishedPhotosCount} active
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab('videos')}
+              className={`flex-1 md:flex-none px-4 py-3 rounded-xl text-xs font-sans font-bold uppercase tracking-wider flex items-center justify-between transition-all ${
+                activeTab === 'videos'
+                  ? 'bg-charcoal text-white shadow-md'
+                  : 'text-charcoal hover:bg-sand/40 hover:text-copper'
+              }`}
+            >
+              <div className="flex items-center gap-2.5">
+                <Film className="w-4 h-4" />
+                <span>Videos ({(content?.videos || []).length})</span>
+              </div>
+              <span className={`text-[10px] px-2 py-0.5 rounded-full ${activeTab === 'videos' ? 'bg-white/20 text-white' : 'bg-charcoal/10 text-charcoal'}`}>
+                {publishedVideosCount} active
+              </span>
             </button>
 
             <button
               type="button"
               onClick={() => setActiveTab('hero')}
-              className={`flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs font-sans font-bold uppercase tracking-wider transition-all whitespace-nowrap ${
-                activeTab === 'hero' ? 'bg-charcoal text-white shadow-sm' : 'text-charcoal/70 hover:bg-sand/60'
+              className={`flex-1 md:flex-none px-4 py-3 rounded-xl text-xs font-sans font-bold uppercase tracking-wider flex items-center gap-2.5 transition-all ${
+                activeTab === 'hero'
+                  ? 'bg-charcoal text-white shadow-md'
+                  : 'text-charcoal hover:bg-sand/40 hover:text-copper'
               }`}
             >
-              <Image className="w-4 h-4 text-copper" />
-              <span>Hero Photos</span>
+              <Monitor className="w-4 h-4" />
+              <span>Hero Images</span>
             </button>
 
             <button
               type="button"
               onClick={() => setActiveTab('about')}
-              className={`flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs font-sans font-bold uppercase tracking-wider transition-all whitespace-nowrap ${
-                activeTab === 'about' ? 'bg-charcoal text-white shadow-sm' : 'text-charcoal/70 hover:bg-sand/60'
+              className={`flex-1 md:flex-none px-4 py-3 rounded-xl text-xs font-sans font-bold uppercase tracking-wider flex items-center gap-2.5 transition-all ${
+                activeTab === 'about'
+                  ? 'bg-charcoal text-white shadow-md'
+                  : 'text-charcoal hover:bg-sand/40 hover:text-copper'
               }`}
             >
-              <User className="w-4 h-4 text-copper" />
-              <span>About & Services</span>
+              <User className="w-4 h-4" />
+              <span>About Section</span>
             </button>
 
             <button
               type="button"
               onClick={() => setActiveTab('testimonials')}
-              className={`flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs font-sans font-bold uppercase tracking-wider transition-all whitespace-nowrap ${
-                activeTab === 'testimonials' ? 'bg-charcoal text-white shadow-sm' : 'text-charcoal/70 hover:bg-sand/60'
+              className={`flex-1 md:flex-none px-4 py-3 rounded-xl text-xs font-sans font-bold uppercase tracking-wider flex items-center justify-between transition-all ${
+                activeTab === 'testimonials'
+                  ? 'bg-charcoal text-white shadow-md'
+                  : 'text-charcoal hover:bg-sand/40 hover:text-copper'
               }`}
             >
-              <MessageSquare className="w-4 h-4 text-copper" />
-              <span>Testimonials ({content.testimonials.length})</span>
+              <div className="flex items-center gap-2.5">
+                <MessageSquare className="w-4 h-4" />
+                <span>Reviews ({content?.testimonials?.length || 0})</span>
+              </div>
+              <span className={`text-[10px] px-2 py-0.5 rounded-full ${activeTab === 'testimonials' ? 'bg-white/20 text-white' : 'bg-charcoal/10 text-charcoal'}`}>
+                {publishedTestimonialsCount} active
+              </span>
             </button>
+          </aside>
 
-            <button
-              type="button"
-              onClick={() => setActiveTab('settings')}
-              className={`flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs font-sans font-bold uppercase tracking-wider transition-all whitespace-nowrap ${
-                activeTab === 'settings' ? 'bg-charcoal text-white shadow-sm' : 'text-charcoal/70 hover:bg-sand/60'
-              }`}
-            >
-              <RefreshCw className="w-4 h-4 text-copper" />
-              <span>Database & Backup</span>
-            </button>
-          </div>
-
-          {/* Active Tab Panel Content */}
-          <div className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto bg-white">
+          {/* Content Area */}
+          <main className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8 bg-white">
             {/* ======================================================== */}
-            {/* TAB: ALBUMS MANAGER (Add, Edit, Delete, Reorder, Hide)   */}
+            {/* TAB 1: ALBUMS / PHOTOS                                  */}
             {/* ======================================================== */}
             {activeTab === 'albums' && (
               <div className="space-y-6">
-                <div className="flex items-center justify-between flex-wrap gap-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-charcoal/10">
                   <div>
-                    <h3 className="font-serif text-xl sm:text-2xl text-charcoal font-bold">
-                      Albums & Media Manager
+                    <h3 className="font-serif text-2xl font-bold text-charcoal uppercase">
+                      Album Photos Management
                     </h3>
                     <p className="text-xs text-charcoal-muted font-sans mt-0.5">
-                      Upload new photos/videos, edit details, drag & reorder, and toggle visibility.
+                      Upload directly to Supabase storage, edit captions, and reorder. <strong>Max 45 visible on website.</strong>
                     </p>
                   </div>
 
@@ -401,70 +472,75 @@ export default function AdminDashboard({ isOpen, onClose }) {
                       type="button"
                       onClick={() => {
                         shuffleAlbums()
-                        showToast('Albums shuffled randomly!')
+                        showToast('Albums shuffled!')
                       }}
-                      className="inline-flex items-center gap-2 px-3.5 py-2.5 bg-sand hover:bg-sand-dark text-charcoal text-xs font-sans font-bold tracking-wider uppercase rounded-xl transition-colors shadow-sm"
-                      title="Randomly shuffle all albums"
+                      className="px-3.5 py-2.5 bg-[#FAF8F5] border border-charcoal/20 text-charcoal hover:bg-sand rounded-xl text-xs font-sans font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-sm"
+                      title="Shuffle All Photos Order"
                     >
-                      <Shuffle className="w-4 h-4 text-copper" />
+                      <Shuffle className="w-3.5 h-3.5" />
                       <span>Shuffle Order</span>
                     </button>
 
                     <button
                       type="button"
                       onClick={() => setIsAddingAlbum(true)}
-                      className="inline-flex items-center gap-2 px-4 py-2.5 bg-copper hover:bg-copper-dark text-white text-xs font-sans font-bold tracking-wider uppercase rounded-xl transition-colors shadow-md"
+                      className="px-4 py-2.5 bg-copper hover:bg-copper-dark text-white rounded-xl text-xs font-sans font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-md transition-colors"
                     >
                       <Plus className="w-4 h-4" />
-                      <span>Upload New Album</span>
+                      <span>Upload Photo</span>
                     </button>
                   </div>
                 </div>
 
-                {/* Add Album Form */}
+                {/* Upload New Photo Form */}
                 {isAddingAlbum && (
-                  <form onSubmit={handleCreateAlbum} className="p-5 bg-[#FAF8F5] rounded-2xl border-2 border-copper/30 space-y-4">
+                  <form
+                    onSubmit={handleCreateAlbum}
+                    className="p-5 sm:p-6 bg-[#FAF8F5] border border-copper/30 rounded-2xl space-y-4 shadow-sm"
+                  >
                     <div className="flex items-center justify-between">
-                      <h4 className="font-sans font-bold text-sm text-charcoal uppercase tracking-wider">
-                        Upload & Publish New Album
+                      <h4 className="font-serif text-base font-bold text-charcoal uppercase flex items-center gap-2">
+                        <Plus className="w-4 h-4 text-copper" />
+                        <span>Upload New Photo to Supabase</span>
                       </h4>
                       <button
                         type="button"
                         onClick={() => setIsAddingAlbum(false)}
-                        className="p-1 text-charcoal/40 hover:text-charcoal"
+                        className="text-charcoal/40 hover:text-charcoal"
                       >
                         <X className="w-4 h-4" />
                       </button>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div>
+                    <div className="grid grid-cols-1 md:grid-cols-12 gap-5">
+                      <div className="md:col-span-5">
                         <ImageUploader
                           value={newAlbum.image}
                           onChange={(img) => setNewAlbum({ ...newAlbum, image: img })}
-                          label="Album Photo or Video"
+                          label="Select or Drop Photo"
                           aspectRatio="aspect-[4/5]"
+                          acceptMedia="image/*"
                         />
                       </div>
 
-                      <div className="space-y-3">
+                      <div className="md:col-span-7 space-y-3.5">
                         <div>
-                          <label className="block text-xs font-sans font-semibold text-charcoal/80 uppercase mb-1">
-                            Album Title
+                          <label className="block text-xs font-sans font-bold text-charcoal uppercase mb-1">
+                            Title / Shoot Name
                           </label>
                           <input
                             type="text"
                             required
                             value={newAlbum.title}
                             onChange={(e) => setNewAlbum({ ...newAlbum, title: e.target.value })}
-                            placeholder="e.g. Wedding Highlight in Colombo"
+                            placeholder="e.g. Royal Botanical Garden Couple Session"
                             className="w-full px-3 py-2 bg-white border border-charcoal/20 rounded-lg text-xs font-sans focus:outline-none focus:border-copper"
                           />
                         </div>
 
                         <div>
-                          <label className="block text-xs font-sans font-semibold text-charcoal/80 uppercase mb-1">
-                            Service Category
+                          <label className="block text-xs font-sans font-bold text-charcoal uppercase mb-1">
+                            Category
                           </label>
                           <select
                             value={newAlbum.category}
@@ -472,7 +548,9 @@ export default function AdminDashboard({ isOpen, onClose }) {
                             className="w-full px-3 py-2 bg-white border border-charcoal/20 rounded-lg text-xs font-sans focus:outline-none focus:border-copper"
                           >
                             <option value="Wedding Photography">Wedding Photography</option>
-                            <option value="Pre-Wedding / Engagement Photography">Pre-Wedding / Engagement Photography</option>
+                            <option value="Pre-Wedding / Engagement Photography">
+                              Pre-Wedding / Engagement Photography
+                            </option>
                             <option value="Graduation Photography">Graduation Photography</option>
                             <option value="Vehicle Photography">Vehicle Photography</option>
                             <option value="Sports Photography">Sports Photography</option>
@@ -481,27 +559,14 @@ export default function AdminDashboard({ isOpen, onClose }) {
                         </div>
 
                         <div>
-                          <label className="block text-xs font-sans font-semibold text-charcoal/80 uppercase mb-1">
-                            Optional Video Link (MP4 / YouTube / Vimeo)
-                          </label>
-                          <input
-                            type="url"
-                            value={newAlbum.video_url}
-                            onChange={(e) => setNewAlbum({ ...newAlbum, video_url: e.target.value })}
-                            placeholder="https://..."
-                            className="w-full px-3 py-2 bg-white border border-charcoal/20 rounded-lg text-xs font-sans focus:outline-none focus:border-copper"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="block text-xs font-sans font-semibold text-charcoal/80 uppercase mb-1">
-                            Notes / Story
+                          <label className="block text-xs font-sans font-bold text-charcoal uppercase mb-1">
+                            Notes / Location Description (Optional)
                           </label>
                           <textarea
                             rows={2}
                             value={newAlbum.note}
                             onChange={(e) => setNewAlbum({ ...newAlbum, note: e.target.value })}
-                            placeholder="Brief description of the shoot..."
+                            placeholder="Brief details about the shoot..."
                             className="w-full px-3 py-2 bg-white border border-charcoal/20 rounded-lg text-xs font-sans focus:outline-none focus:border-copper resize-none"
                           />
                         </div>
@@ -510,7 +575,7 @@ export default function AdminDashboard({ isOpen, onClose }) {
                           type="submit"
                           className="w-full py-3 bg-charcoal hover:bg-copper text-white text-xs font-sans font-bold uppercase tracking-wider rounded-xl transition-colors"
                         >
-                          Publish Album
+                          Publish to Albums
                         </button>
                       </div>
                     </div>
@@ -520,23 +585,36 @@ export default function AdminDashboard({ isOpen, onClose }) {
                 {/* Edit Album Modal */}
                 {editingAlbum && (
                   <div className="fixed inset-0 z-[150] bg-charcoal/80 flex items-center justify-center p-4">
-                    <form onSubmit={handleSaveEditedAlbum} className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-charcoal/15 space-y-4">
+                    <form
+                      onSubmit={handleSaveEditedAlbum}
+                      className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-charcoal/15 space-y-4"
+                    >
                       <div className="flex items-center justify-between">
-                        <h4 className="font-serif text-lg font-bold text-charcoal">Edit Album</h4>
-                        <button type="button" onClick={() => setEditingAlbum(null)} className="text-charcoal/40 hover:text-charcoal">
+                        <h4 className="font-serif text-lg font-bold text-charcoal uppercase">
+                          Edit Photo Details
+                        </h4>
+                        <button
+                          type="button"
+                          onClick={() => setEditingAlbum(null)}
+                          className="text-charcoal/40 hover:text-charcoal"
+                        >
                           <X className="w-4 h-4" />
                         </button>
                       </div>
 
                       <ImageUploader
-                        value={editingAlbum.image}
-                        onChange={(img) => setEditingAlbum({ ...editingAlbum, image: img })}
-                        label="Album Photo"
+                        value={editingAlbum.image_url || editingAlbum.image}
+                        onChange={(img) =>
+                          setEditingAlbum({ ...editingAlbum, image_url: img, image: img })
+                        }
+                        label="Photo"
                         aspectRatio="aspect-[16/9]"
                       />
 
                       <div>
-                        <label className="block text-xs font-sans font-bold text-charcoal uppercase mb-1">Title</label>
+                        <label className="block text-xs font-sans font-bold text-charcoal uppercase mb-1">
+                          Title
+                        </label>
                         <input
                           type="text"
                           required
@@ -547,29 +625,23 @@ export default function AdminDashboard({ isOpen, onClose }) {
                       </div>
 
                       <div>
-                        <label className="block text-xs font-sans font-bold text-charcoal uppercase mb-1">Category</label>
+                        <label className="block text-xs font-sans font-bold text-charcoal uppercase mb-1">
+                          Category
+                        </label>
                         <select
                           value={editingAlbum.category}
                           onChange={(e) => setEditingAlbum({ ...editingAlbum, category: e.target.value })}
                           className="w-full px-3 py-2 text-xs bg-[#FAF8F5] border border-charcoal/20 rounded-lg focus:outline-none focus:border-copper"
                         >
                           <option value="Wedding Photography">Wedding Photography</option>
-                          <option value="Pre-Wedding / Engagement Photography">Pre-Wedding / Engagement Photography</option>
+                          <option value="Pre-Wedding / Engagement Photography">
+                            Pre-Wedding / Engagement Photography
+                          </option>
                           <option value="Graduation Photography">Graduation Photography</option>
                           <option value="Vehicle Photography">Vehicle Photography</option>
                           <option value="Sports Photography">Sports Photography</option>
                           <option value="Architecture Photography">Architecture Photography</option>
                         </select>
-                      </div>
-
-                      <div>
-                        <label className="block text-xs font-sans font-bold text-charcoal uppercase mb-1">Notes</label>
-                        <textarea
-                          rows={2}
-                          value={editingAlbum.note || ''}
-                          onChange={(e) => setEditingAlbum({ ...editingAlbum, note: e.target.value })}
-                          className="w-full px-3 py-2 text-xs bg-[#FAF8F5] border border-charcoal/20 rounded-lg focus:outline-none focus:border-copper resize-none"
-                        />
                       </div>
 
                       <div className="flex gap-2 pt-2">
@@ -582,7 +654,7 @@ export default function AdminDashboard({ isOpen, onClose }) {
                         <button
                           type="button"
                           onClick={() => setEditingAlbum(null)}
-                          className="px-4 py-2.5 bg-charcoal/10 text-charcoal text-xs font-sans font-medium rounded-lg hover:bg-charcoal/20"
+                          className="px-4 py-2.5 bg-charcoal/10 text-charcoal text-xs font-sans font-bold uppercase rounded-lg hover:bg-charcoal/20"
                         >
                           Cancel
                         </button>
@@ -591,21 +663,24 @@ export default function AdminDashboard({ isOpen, onClose }) {
                   </div>
                 )}
 
-                {/* Albums Grid with Reorder, Publish, Edit, Delete */}
+                {/* Photos Grid */}
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                  {content.albums.map((album, idx) => {
+                  {(content?.albums || []).map((album, idx) => {
                     const isPublished = album.is_published !== false
+                    const imgSrc = album.image_url || album.image
 
                     return (
                       <div
                         key={album.id}
-                        className={`group relative rounded-xl overflow-hidden border shadow-sm flex flex-col justify-between transition-all ${
-                          isPublished ? 'bg-[#FAF8F5] border-charcoal/15' : 'bg-charcoal/5 border-charcoal/10 opacity-60'
+                        className={`group relative rounded-xl overflow-hidden border transition-all ${
+                          isPublished
+                            ? 'border-charcoal/15 bg-[#FAF8F5] shadow-sm hover:shadow-md'
+                            : 'border-dashed border-charcoal/30 bg-charcoal/5 opacity-60'
                         }`}
                       >
                         <div className="aspect-[4/5] overflow-hidden bg-charcoal relative">
                           <img
-                            src={album.image_url || album.image}
+                            src={imgSrc}
                             alt={album.title}
                             className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
                           />
@@ -626,7 +701,7 @@ export default function AdminDashboard({ isOpen, onClose }) {
                                 </button>
                                 <button
                                   type="button"
-                                  disabled={idx === content.albums.length - 1}
+                                  disabled={idx === (content?.albums || []).length - 1}
                                   onClick={() => handleMoveAlbum(idx, 1)}
                                   className="p-1 bg-white/90 hover:bg-white text-charcoal rounded disabled:opacity-40"
                                   title="Move Down / Right"
@@ -640,9 +715,15 @@ export default function AdminDashboard({ isOpen, onClose }) {
                                 type="button"
                                 onClick={() => {
                                   togglePublishAlbum(album.id)
-                                  showToast(isPublished ? 'Photo hidden from public site' : 'Photo published live!')
+                                  showToast(
+                                    isPublished ? 'Photo hidden from public site' : 'Photo published live!'
+                                  )
                                 }}
-                                className={`p-1.5 rounded text-white shadow ${isPublished ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-charcoal hover:bg-charcoal/80'}`}
+                                className={`p-1.5 rounded text-white shadow ${
+                                  isPublished
+                                    ? 'bg-emerald-600 hover:bg-emerald-700'
+                                    : 'bg-charcoal hover:bg-charcoal/80'
+                                }`}
                                 title={isPublished ? 'Hide from public site' : 'Publish live'}
                               >
                                 {isPublished ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
@@ -699,159 +780,471 @@ export default function AdminDashboard({ isOpen, onClose }) {
             )}
 
             {/* ======================================================== */}
-            {/* TAB: HERO PHOTOS                                         */}
+            {/* TAB 2: VIDEOS / CINEMATOGRAPHY                           */}
             {/* ======================================================== */}
-            {activeTab === 'hero' && (
-              <div className="max-w-4xl space-y-6">
-                <div>
-                  <h3 className="font-serif text-xl sm:text-2xl text-charcoal font-bold">
-                    Hero Section Background Photos
-                  </h3>
-                  <p className="text-xs text-charcoal-muted font-sans mt-0.5">
-                    Upload or replace the desktop landscape and mobile vertical hero backgrounds.
-                  </p>
+            {activeTab === 'videos' && (
+              <div className="space-y-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-charcoal/10">
+                  <div>
+                    <h3 className="font-serif text-2xl font-bold text-charcoal uppercase">
+                      Cinematography & Videos Management
+                    </h3>
+                    <p className="text-xs text-charcoal-muted font-sans mt-0.5">
+                      Upload MP4 / MOV videos or paste video URLs for the Cinematography section. <strong>Max 3 visible on website.</strong>
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setIsAddingVideo(true)}
+                    className="px-4 py-2.5 bg-copper hover:bg-copper-dark text-white rounded-xl text-xs font-sans font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-md transition-colors self-start sm:self-auto"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>Upload Video</span>
+                  </button>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Desktop Hero */}
-                  <div className="p-4 sm:p-5 rounded-2xl bg-[#FAF8F5] border border-charcoal/10 space-y-3">
-                    <div className="flex items-center gap-2 text-xs font-sans font-bold text-charcoal uppercase">
-                      <Monitor className="w-4 h-4 text-copper" />
-                      <span>Desktop Hero Photo (Landscape)</span>
+                {/* Upload New Video Form */}
+                {isAddingVideo && (
+                  <form
+                    onSubmit={handleCreateVideo}
+                    className="p-5 sm:p-6 bg-[#FAF8F5] border border-copper/30 rounded-2xl space-y-4 shadow-sm"
+                  >
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-serif text-base font-bold text-charcoal uppercase flex items-center gap-2">
+                        <Film className="w-4 h-4 text-copper" />
+                        <span>Upload New Video</span>
+                      </h4>
+                      <button
+                        type="button"
+                        onClick={() => setIsAddingVideo(false)}
+                        className="text-charcoal/40 hover:text-charcoal"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
                     </div>
-                    <ImageUploader
-                      value={content.hero.desktopImage}
-                      onChange={(newImg) => {
-                        updateHeroImages({ desktop: newImg })
-                        showToast('Desktop hero image updated!')
-                      }}
-                      aspectRatio="aspect-[16/9]"
-                      label=""
-                    />
-                  </div>
 
-                  {/* Mobile Hero */}
-                  <div className="p-4 sm:p-5 rounded-2xl bg-[#FAF8F5] border border-charcoal/10 space-y-3">
-                    <div className="flex items-center gap-2 text-xs font-sans font-bold text-charcoal uppercase">
-                      <Smartphone className="w-4 h-4 text-copper" />
-                      <span>Mobile / Portrait Hero Photo</span>
+                    <div className="grid grid-cols-1 md:grid-cols-12 gap-5">
+                      <div className="md:col-span-5">
+                        <ImageUploader
+                          value={newVideo.video_url}
+                          onChange={(vUrl) => setNewVideo({ ...newVideo, video_url: vUrl })}
+                          label="Select MP4 / Video File"
+                          aspectRatio="aspect-video"
+                          acceptMedia="video/*"
+                        />
+                      </div>
+
+                      <div className="md:col-span-7 space-y-3.5">
+                        <div>
+                          <label className="block text-xs font-sans font-bold text-charcoal uppercase mb-1">
+                            Video Title
+                          </label>
+                          <input
+                            type="text"
+                            required
+                            value={newVideo.title}
+                            onChange={(e) => setNewVideo({ ...newVideo, title: e.target.value })}
+                            placeholder="e.g. Cinematic Wedding Teaser 4K"
+                            className="w-full px-3 py-2 bg-white border border-charcoal/20 rounded-lg text-xs font-sans focus:outline-none focus:border-copper"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-sans font-bold text-charcoal uppercase mb-1">
+                            Category
+                          </label>
+                          <select
+                            value={newVideo.category}
+                            onChange={(e) => setNewVideo({ ...newVideo, category: e.target.value })}
+                            className="w-full px-3 py-2 bg-white border border-charcoal/20 rounded-lg text-xs font-sans focus:outline-none focus:border-copper"
+                          >
+                            <option value="Pre-Wedding / Wedding Cinematography">
+                              Pre-Wedding / Wedding Cinematography
+                            </option>
+                            <option value="Vehicle & Rolling Action Reel">
+                              Vehicle & Rolling Action Reel
+                            </option>
+                            <option value="Sports & Athletic Movement">
+                              Sports & Athletic Movement
+                            </option>
+                            <option value="Event & Milestone Highlight">
+                              Event & Milestone Highlight
+                            </option>
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-sans font-bold text-charcoal uppercase mb-1">
+                            Description
+                          </label>
+                          <textarea
+                            rows={2}
+                            value={newVideo.description}
+                            onChange={(e) => setNewVideo({ ...newVideo, description: e.target.value })}
+                            placeholder="Brief description of the motion highlight..."
+                            className="w-full px-3 py-2 bg-white border border-charcoal/20 rounded-lg text-xs font-sans focus:outline-none focus:border-copper resize-none"
+                          />
+                        </div>
+
+                        <button
+                          type="submit"
+                          className="w-full py-3 bg-charcoal hover:bg-copper text-white text-xs font-sans font-bold uppercase tracking-wider rounded-xl transition-colors"
+                        >
+                          Publish Video
+                        </button>
+                      </div>
                     </div>
-                    <ImageUploader
-                      value={content.hero.mobileImage}
-                      onChange={(newImg) => {
-                        updateHeroImages({ mobile: newImg })
-                        showToast('Mobile hero image updated!')
-                      }}
-                      aspectRatio="aspect-[3/4]"
-                      label=""
-                    />
+                  </form>
+                )}
+
+                {/* Edit Video Modal */}
+                {editingVideo && (
+                  <div className="fixed inset-0 z-[150] bg-charcoal/80 flex items-center justify-center p-4">
+                    <form
+                      onSubmit={handleSaveEditedVideo}
+                      className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-charcoal/15 space-y-4"
+                    >
+                      <div className="flex items-center justify-between">
+                        <h4 className="font-serif text-lg font-bold text-charcoal uppercase">
+                          Edit Video Details
+                        </h4>
+                        <button
+                          type="button"
+                          onClick={() => setEditingVideo(null)}
+                          className="text-charcoal/40 hover:text-charcoal"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+
+                      <ImageUploader
+                        value={editingVideo.video_url}
+                        onChange={(vUrl) => setEditingVideo({ ...editingVideo, video_url: vUrl })}
+                        label="Video File / URL"
+                        aspectRatio="aspect-video"
+                        acceptMedia="video/*"
+                      />
+
+                      <div>
+                        <label className="block text-xs font-sans font-bold text-charcoal uppercase mb-1">
+                          Title
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={editingVideo.title}
+                          onChange={(e) => setEditingVideo({ ...editingVideo, title: e.target.value })}
+                          className="w-full px-3 py-2 text-xs bg-[#FAF8F5] border border-charcoal/20 rounded-lg focus:outline-none focus:border-copper"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-sans font-bold text-charcoal uppercase mb-1">
+                          Category
+                        </label>
+                        <select
+                          value={editingVideo.category}
+                          onChange={(e) => setEditingVideo({ ...editingVideo, category: e.target.value })}
+                          className="w-full px-3 py-2 text-xs bg-[#FAF8F5] border border-charcoal/20 rounded-lg focus:outline-none focus:border-copper"
+                        >
+                          <option value="Pre-Wedding / Wedding Cinematography">
+                            Pre-Wedding / Wedding Cinematography
+                          </option>
+                          <option value="Vehicle & Rolling Action Reel">
+                            Vehicle & Rolling Action Reel
+                          </option>
+                          <option value="Sports & Athletic Movement">
+                            Sports & Athletic Movement
+                          </option>
+                          <option value="Event & Milestone Highlight">
+                            Event & Milestone Highlight
+                          </option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-sans font-bold text-charcoal uppercase mb-1">
+                          Description
+                        </label>
+                        <textarea
+                          rows={2}
+                          value={editingVideo.description || ''}
+                          onChange={(e) => setEditingVideo({ ...editingVideo, description: e.target.value })}
+                          className="w-full px-3 py-2 text-xs bg-[#FAF8F5] border border-charcoal/20 rounded-lg focus:outline-none focus:border-copper resize-none"
+                        />
+                      </div>
+
+                      <div className="flex gap-2 pt-2">
+                        <button
+                          type="submit"
+                          className="flex-1 py-2.5 bg-copper text-white text-xs font-sans font-bold uppercase rounded-lg hover:bg-copper-dark"
+                        >
+                          Save Changes
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setEditingVideo(null)}
+                          className="px-4 py-2.5 bg-charcoal/10 text-charcoal text-xs font-sans font-bold uppercase rounded-lg hover:bg-charcoal/20"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </form>
                   </div>
+                )}
+
+                {/* Videos List Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {(content?.videos || []).map((vid) => {
+                    const isPublished = vid.is_published !== false
+
+                    return (
+                      <div
+                        key={vid.id}
+                        className={`group relative rounded-2xl overflow-hidden border transition-all ${
+                          isPublished
+                            ? 'border-charcoal/15 bg-[#FAF8F5] shadow-sm hover:shadow-md'
+                            : 'border-dashed border-charcoal/30 bg-charcoal/5 opacity-60'
+                        }`}
+                      >
+                        <div className="aspect-video overflow-hidden bg-charcoal relative">
+                          <video
+                            src={vid.video_url}
+                            controls
+                            className="w-full h-full object-cover object-center"
+                          />
+
+                          {/* Quick Actions overlay */}
+                          <div className="absolute top-2 right-2 flex items-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (togglePublishVideo) togglePublishVideo(vid.id)
+                                showToast(isPublished ? 'Video hidden from site' : 'Video published live!')
+                              }}
+                              className={`p-1.5 rounded-full text-white shadow ${
+                                isPublished ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-charcoal'
+                              }`}
+                              title={isPublished ? 'Hide from public site' : 'Publish live'}
+                            >
+                              {isPublished ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setEditingVideo(vid)}
+                              className="p-1.5 bg-white text-charcoal hover:bg-copper hover:text-white rounded-full shadow transition-colors"
+                              title="Edit Video"
+                            >
+                              <Edit className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (confirm(`Delete video "${vid.title}"?`)) {
+                                  if (removeVideo) removeVideo(vid.id)
+                                  showToast('Video deleted')
+                                }
+                              }}
+                              className="p-1.5 bg-red-600 hover:bg-red-700 text-white rounded-full shadow transition-colors"
+                              title="Delete Video"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="p-4">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] font-sans font-bold text-copper uppercase tracking-wider">
+                              {vid.category || 'Cinematography'}
+                            </span>
+                            {!isPublished && (
+                              <span className="text-[9px] bg-red-100 text-red-700 font-bold px-1.5 py-0.5 rounded">
+                                HIDDEN
+                              </span>
+                            )}
+                          </div>
+                          <h4 className="font-serif text-sm font-bold text-charcoal truncate mt-1">
+                            {vid.title}
+                          </h4>
+                          {vid.description && (
+                            <p className="text-xs text-charcoal-muted font-sans mt-1 line-clamp-2">
+                              {vid.description}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    )
+                  })}
                 </div>
               </div>
             )}
 
             {/* ======================================================== */}
-            {/* TAB: ABOUT & SERVICES                                    */}
+            {/* TAB 3: HERO IMAGES                                       */}
             {/* ======================================================== */}
-            {activeTab === 'about' && (
-              <div className="max-w-3xl space-y-6">
+            {activeTab === 'hero' && (
+              <form onSubmit={handleSaveHero} className="max-w-3xl space-y-6">
                 <div>
-                  <h3 className="font-serif text-xl sm:text-2xl text-charcoal font-bold">
-                    About Section & Profile
+                  <h3 className="font-serif text-2xl font-bold text-charcoal uppercase">
+                    Hero Background Showcase
                   </h3>
                   <p className="text-xs text-charcoal-muted font-sans mt-0.5">
-                    Update your portrait cutout, studio address, and biographical details.
+                    Update the high-impact background photograph displayed on Desktop and Mobile hero views.
                   </p>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                  <div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Desktop Hero Image */}
+                  <div className="p-5 bg-[#FAF8F5] border border-charcoal/15 rounded-2xl space-y-3">
+                    <div className="flex items-center gap-2 text-charcoal font-sans font-bold text-xs uppercase">
+                      <Monitor className="w-4 h-4 text-copper" />
+                      <span>Desktop Hero Image (Wide Aspect)</span>
+                    </div>
                     <ImageUploader
-                      value={content.about.portraitImage}
-                      onChange={(img) => {
-                        updateAbout({ portraitImage: img })
-                        showToast('Portrait image updated!')
-                      }}
-                      label="Photographer Portrait Cutout"
-                      aspectRatio="aspect-[3/4]"
+                      value={heroForm.desktop}
+                      onChange={(img) => setHeroForm({ ...heroForm, desktop: img })}
+                      label=""
+                      aspectRatio="aspect-[16/9]"
+                      acceptMedia="image/*"
                     />
                   </div>
 
-                  <div className="sm:col-span-2 space-y-4">
+                  {/* Mobile Hero Image */}
+                  <div className="p-5 bg-[#FAF8F5] border border-charcoal/15 rounded-2xl space-y-3">
+                    <div className="flex items-center gap-2 text-charcoal font-sans font-bold text-xs uppercase">
+                      <Smartphone className="w-4 h-4 text-copper" />
+                      <span>Mobile Hero Image (Portrait Aspect)</span>
+                    </div>
+                    <ImageUploader
+                      value={heroForm.mobile}
+                      onChange={(img) => setHeroForm({ ...heroForm, mobile: img })}
+                      label=""
+                      aspectRatio="aspect-[9/16]"
+                      acceptMedia="image/*"
+                    />
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  className="px-6 py-3 bg-charcoal hover:bg-copper text-white text-xs font-sans font-bold uppercase tracking-wider rounded-xl transition-colors shadow-md"
+                >
+                  Save Hero Images
+                </button>
+              </form>
+            )}
+
+            {/* ======================================================== */}
+            {/* TAB 4: ABOUT SECTION                                     */}
+            {/* ======================================================== */}
+            {activeTab === 'about' && (
+              <form onSubmit={handleSaveAbout} className="max-w-3xl space-y-6">
+                <div>
+                  <h3 className="font-serif text-2xl font-bold text-charcoal uppercase">
+                    About Artist & Studio Info
+                  </h3>
+                  <p className="text-xs text-charcoal-muted font-sans mt-0.5">
+                    Update your official photographer portrait, biography paragraphs, and studio address.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+                  <div className="md:col-span-5 space-y-3">
+                    <label className="block text-xs font-sans font-bold text-charcoal uppercase">
+                      Photographer Portrait Photo
+                    </label>
+                    <ImageUploader
+                      value={aboutForm.portraitImage}
+                      onChange={(img) => setAboutForm({ ...aboutForm, portraitImage: img })}
+                      label=""
+                      aspectRatio="aspect-[4/5]"
+                      acceptMedia="image/*"
+                    />
+                  </div>
+
+                  <div className="md:col-span-7 space-y-4">
                     <div>
-                      <label className="block text-xs font-sans font-semibold text-charcoal/80 uppercase mb-1">
+                      <label className="block text-xs font-sans font-bold text-charcoal uppercase mb-1">
                         Photographer Name
                       </label>
                       <input
                         type="text"
-                        value={content.about.name}
-                        onChange={(e) => updateAbout({ name: e.target.value })}
+                        required
+                        value={aboutForm.name}
+                        onChange={(e) => setAboutForm({ ...aboutForm, name: e.target.value })}
                         className="w-full px-3 py-2 bg-[#FAF8F5] border border-charcoal/20 rounded-lg text-xs font-sans focus:outline-none focus:border-copper"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-xs font-sans font-semibold text-charcoal/80 uppercase mb-1">
-                        Studio Address
+                      <label className="block text-xs font-sans font-bold text-charcoal uppercase mb-1">
+                        Studio Address / Location
                       </label>
-                      <div className="relative">
-                        <MapPin className="w-3.5 h-3.5 text-copper absolute left-3 top-1/2 -translate-y-1/2" />
-                        <input
-                          type="text"
-                          value={content.about.address}
-                          onChange={(e) => updateAbout({ address: e.target.value })}
-                          className="w-full pl-9 pr-3 py-2 bg-[#FAF8F5] border border-charcoal/20 rounded-lg text-xs font-sans focus:outline-none focus:border-copper"
-                        />
-                      </div>
+                      <input
+                        type="text"
+                        required
+                        value={aboutForm.address}
+                        onChange={(e) => setAboutForm({ ...aboutForm, address: e.target.value })}
+                        className="w-full px-3 py-2 bg-[#FAF8F5] border border-charcoal/20 rounded-lg text-xs font-sans focus:outline-none focus:border-copper"
+                      />
                     </div>
 
                     <div>
-                      <label className="block text-xs font-sans font-semibold text-charcoal/80 uppercase mb-1">
+                      <label className="block text-xs font-sans font-bold text-charcoal uppercase mb-1">
                         Bio Paragraph 1
                       </label>
                       <textarea
                         rows={3}
-                        value={content.about.bio1}
-                        onChange={(e) => updateAbout({ bio1: e.target.value })}
+                        value={aboutForm.bio1}
+                        onChange={(e) => setAboutForm({ ...aboutForm, bio1: e.target.value })}
                         className="w-full px-3 py-2 bg-[#FAF8F5] border border-charcoal/20 rounded-lg text-xs font-sans focus:outline-none focus:border-copper resize-none"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-xs font-sans font-semibold text-charcoal/80 uppercase mb-1">
+                      <label className="block text-xs font-sans font-bold text-charcoal uppercase mb-1">
                         Bio Paragraph 2
                       </label>
                       <textarea
                         rows={3}
-                        value={content.about.bio2}
-                        onChange={(e) => updateAbout({ bio2: e.target.value })}
+                        value={aboutForm.bio2}
+                        onChange={(e) => setAboutForm({ ...aboutForm, bio2: e.target.value })}
                         className="w-full px-3 py-2 bg-[#FAF8F5] border border-charcoal/20 rounded-lg text-xs font-sans focus:outline-none focus:border-copper resize-none"
                       />
                     </div>
                   </div>
                 </div>
-              </div>
+
+                <button
+                  type="submit"
+                  className="px-6 py-3 bg-charcoal hover:bg-copper text-white text-xs font-sans font-bold uppercase tracking-wider rounded-xl transition-colors shadow-md"
+                >
+                  Save About Section
+                </button>
+              </form>
             )}
 
             {/* ======================================================== */}
-            {/* TAB: TESTIMONIALS MANAGER                                */}
+            {/* TAB 5: TESTIMONIALS                                      */}
             {/* ======================================================== */}
             {activeTab === 'testimonials' && (
               <div className="space-y-6">
-                <div className="flex items-center justify-between flex-wrap gap-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-charcoal/10">
                   <div>
-                    <h3 className="font-serif text-xl sm:text-2xl text-charcoal font-bold">
-                      Client Testimonials
+                    <h3 className="font-serif text-2xl font-bold text-charcoal uppercase">
+                      Client Testimonials Management
                     </h3>
                     <p className="text-xs text-charcoal-muted font-sans mt-0.5">
-                      Add, edit, remove, and toggle visibility for client review stories.
+                      Manage client reviews and feedback photos. <strong>Max 3 visible on website.</strong>
                     </p>
                   </div>
 
                   <button
                     type="button"
                     onClick={() => setIsAddingTestimonial(true)}
-                    className="inline-flex items-center gap-2 px-4 py-2.5 bg-copper hover:bg-copper-dark text-white text-xs font-sans font-bold tracking-wider uppercase rounded-xl transition-colors shadow-md"
+                    className="px-4 py-2.5 bg-copper hover:bg-copper-dark text-white rounded-xl text-xs font-sans font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-md transition-colors self-start sm:self-auto"
                   >
                     <Plus className="w-4 h-4" />
                     <span>Add Testimonial</span>
@@ -860,70 +1253,82 @@ export default function AdminDashboard({ isOpen, onClose }) {
 
                 {/* Add Testimonial Form */}
                 {isAddingTestimonial && (
-                  <form onSubmit={handleCreateTestimonial} className="p-5 bg-[#FAF8F5] rounded-2xl border-2 border-copper/30 space-y-4">
+                  <form
+                    onSubmit={handleCreateTestimonial}
+                    className="p-5 sm:p-6 bg-[#FAF8F5] border border-copper/30 rounded-2xl space-y-4 shadow-sm"
+                  >
                     <div className="flex items-center justify-between">
-                      <h4 className="font-sans font-bold text-sm text-charcoal uppercase tracking-wider">
-                        Add Client Testimonial Story
+                      <h4 className="font-serif text-base font-bold text-charcoal uppercase flex items-center gap-2">
+                        <MessageSquare className="w-4 h-4 text-copper" />
+                        <span>New Client Review</span>
                       </h4>
                       <button
                         type="button"
                         onClick={() => setIsAddingTestimonial(false)}
-                        className="p-1 text-charcoal/40 hover:text-charcoal"
+                        className="text-charcoal/40 hover:text-charcoal"
                       >
                         <X className="w-4 h-4" />
                       </button>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                      <div>
+                    <div className="grid grid-cols-1 md:grid-cols-12 gap-5">
+                      <div className="md:col-span-4">
                         <ImageUploader
                           value={newTestimonial.image}
                           onChange={(img) => setNewTestimonial({ ...newTestimonial, image: img })}
-                          label="Client Session Photo"
+                          label="Client Photo"
                           aspectRatio="aspect-[4/3]"
+                          acceptMedia="image/*"
                         />
                       </div>
 
-                      <div className="sm:col-span-2 space-y-3">
+                      <div className="md:col-span-8 space-y-3.5">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                           <div>
-                            <label className="block text-xs font-sans font-semibold text-charcoal/80 uppercase mb-1">
+                            <label className="block text-xs font-sans font-bold text-charcoal uppercase mb-1">
                               Client Name
                             </label>
                             <input
                               type="text"
                               required
                               value={newTestimonial.clientName}
-                              onChange={(e) => setNewTestimonial({ ...newTestimonial, clientName: e.target.value })}
-                              placeholder="e.g. Lakeesha"
+                              onChange={(e) =>
+                                setNewTestimonial({ ...newTestimonial, clientName: e.target.value })
+                              }
+                              placeholder="e.g. Imalka Sandeepani"
                               className="w-full px-3 py-2 bg-white border border-charcoal/20 rounded-lg text-xs font-sans focus:outline-none focus:border-copper"
                             />
                           </div>
 
                           <div>
-                            <label className="block text-xs font-sans font-semibold text-charcoal/80 uppercase mb-1">
-                              Service Tag
+                            <label className="block text-xs font-sans font-bold text-charcoal uppercase mb-1">
+                              Service Shoot Type
                             </label>
                             <input
                               type="text"
+                              required
                               value={newTestimonial.service}
-                              onChange={(e) => setNewTestimonial({ ...newTestimonial, service: e.target.value })}
-                              placeholder="e.g. Wedding Photography"
+                              onChange={(e) =>
+                                setNewTestimonial({ ...newTestimonial, service: e.target.value })
+                              }
+                              placeholder="e.g. Special Event & Pre-Wedding Session"
                               className="w-full px-3 py-2 bg-white border border-charcoal/20 rounded-lg text-xs font-sans focus:outline-none focus:border-copper"
                             />
                           </div>
                         </div>
 
                         <div>
-                          <label className="block text-xs font-sans font-semibold text-charcoal/80 uppercase mb-1">
-                            Client Review
+                          <label className="block text-xs font-sans font-bold text-charcoal uppercase mb-1">
+                            Review / Testimonial Quote
                           </label>
                           <textarea
                             rows={3}
                             required
                             value={newTestimonial.review}
-                            onChange={(e) => setNewTestimonial({ ...newTestimonial, review: e.target.value })}
-                            placeholder="Client feedback text..."
+                            onChange={(e) =>
+                              setNewTestimonial({ ...newTestimonial, review: e.target.value })
+                            }
+                            placeholder="Client feedback in quotes..."
                             className="w-full px-3 py-2 bg-white border border-charcoal/20 rounded-lg text-xs font-sans focus:outline-none focus:border-copper resize-none"
                           />
                         </div>
@@ -939,70 +1344,180 @@ export default function AdminDashboard({ isOpen, onClose }) {
                   </form>
                 )}
 
-                {/* Existing Testimonials List */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {content.testimonials.map((t) => {
-                    const isPublished = t.is_published !== false
+                {/* Edit Testimonial Modal */}
+                {editingTestimonial && (
+                  <div className="fixed inset-0 z-[150] bg-charcoal/80 flex items-center justify-center p-4">
+                    <form
+                      onSubmit={handleSaveEditedTestimonial}
+                      className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-charcoal/15 space-y-4"
+                    >
+                      <div className="flex items-center justify-between">
+                        <h4 className="font-serif text-lg font-bold text-charcoal uppercase">
+                          Edit Testimonial
+                        </h4>
+                        <button
+                          type="button"
+                          onClick={() => setEditingTestimonial(null)}
+                          className="text-charcoal/40 hover:text-charcoal"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+
+                      <ImageUploader
+                        value={editingTestimonial.image}
+                        onChange={(img) =>
+                          setEditingTestimonial({ ...editingTestimonial, image: img })
+                        }
+                        label="Client Photo"
+                        aspectRatio="aspect-[4/3]"
+                      />
+
+                      <div>
+                        <label className="block text-xs font-sans font-bold text-charcoal uppercase mb-1">
+                          Client Name
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={editingTestimonial.clientName}
+                          onChange={(e) =>
+                            setEditingTestimonial({
+                              ...editingTestimonial,
+                              clientName: e.target.value,
+                            })
+                          }
+                          className="w-full px-3 py-2 text-xs bg-[#FAF8F5] border border-charcoal/20 rounded-lg focus:outline-none focus:border-copper"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-sans font-bold text-charcoal uppercase mb-1">
+                          Service
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={editingTestimonial.service}
+                          onChange={(e) =>
+                            setEditingTestimonial({
+                              ...editingTestimonial,
+                              service: e.target.value,
+                            })
+                          }
+                          className="w-full px-3 py-2 text-xs bg-[#FAF8F5] border border-charcoal/20 rounded-lg focus:outline-none focus:border-copper"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-sans font-bold text-charcoal uppercase mb-1">
+                          Review Quote
+                        </label>
+                        <textarea
+                          rows={3}
+                          required
+                          value={editingTestimonial.review}
+                          onChange={(e) =>
+                            setEditingTestimonial({
+                              ...editingTestimonial,
+                              review: e.target.value,
+                            })
+                          }
+                          className="w-full px-3 py-2 text-xs bg-[#FAF8F5] border border-charcoal/20 rounded-lg focus:outline-none focus:border-copper resize-none"
+                        />
+                      </div>
+
+                      <div className="flex gap-2 pt-2">
+                        <button
+                          type="submit"
+                          className="flex-1 py-2.5 bg-copper text-white text-xs font-sans font-bold uppercase rounded-lg hover:bg-copper-dark"
+                        >
+                          Save Changes
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setEditingTestimonial(null)}
+                          className="px-4 py-2.5 bg-charcoal/10 text-charcoal text-xs font-sans font-bold uppercase rounded-lg hover:bg-charcoal/20"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                )}
+
+                {/* Testimonials List */}
+                <div className="space-y-4">
+                  {(content?.testimonials || []).map((item) => {
+                    const isPublished = item.is_published !== false
 
                     return (
                       <div
-                        key={t.id}
-                        className={`p-4 rounded-xl border relative flex gap-4 items-start group shadow-sm transition-all ${
-                          isPublished ? 'bg-[#FAF8F5] border-charcoal/15' : 'bg-charcoal/5 border-charcoal/10 opacity-60'
+                        key={item.id}
+                        className={`p-5 rounded-2xl border flex flex-col sm:flex-row items-start gap-5 transition-all ${
+                          isPublished
+                            ? 'border-charcoal/15 bg-[#FAF8F5] shadow-sm'
+                            : 'border-dashed border-charcoal/30 bg-charcoal/5 opacity-60'
                         }`}
                       >
-                        <div className="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 bg-sand">
-                          <img src={t.image} alt={t.clientName} className="w-full h-full object-cover object-center" />
+                        <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-xl overflow-hidden flex-shrink-0 bg-charcoal">
+                          <img
+                            src={typeof item.image === 'string' ? item.image : item.image?.src || ''}
+                            alt={item.clientName}
+                            className="w-full h-full object-cover object-center"
+                          />
                         </div>
 
-                        <div className="flex-1 min-w-0 pr-14">
-                          <div className="flex items-center gap-2">
-                            <h4 className="font-serif text-sm font-bold text-charcoal truncate">
-                              {t.clientName}
+                        <div className="flex-1 space-y-1.5">
+                          <div className="flex items-center justify-between">
+                            <h4 className="font-serif text-lg font-bold text-charcoal">
+                              {item.clientName}
                             </h4>
-                            {!isPublished && (
-                              <span className="text-[8px] bg-red-100 text-red-700 font-bold px-1.5 py-0.5 rounded">
-                                HIDDEN
-                              </span>
-                            )}
+                            <div className="flex items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  togglePublishTestimonial(item.id)
+                                  showToast(
+                                    isPublished
+                                      ? 'Testimonial hidden from site'
+                                      : 'Testimonial published live!'
+                                  )
+                                }}
+                                className={`p-1.5 rounded-full text-white shadow ${
+                                  isPublished ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-charcoal'
+                                }`}
+                                title={isPublished ? 'Hide from site' : 'Publish live'}
+                              >
+                                {isPublished ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setEditingTestimonial(item)}
+                                className="p-1.5 bg-white text-charcoal hover:bg-copper hover:text-white rounded-full shadow transition-colors"
+                              >
+                                <Edit className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (confirm(`Delete review from "${item.clientName}"?`)) {
+                                    removeTestimonial(item.id)
+                                    showToast('Testimonial removed')
+                                  }
+                                }}
+                                className="p-1.5 bg-red-600 hover:bg-red-700 text-white rounded-full shadow transition-colors"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
                           </div>
-                          <span className="text-[10px] font-sans text-copper font-medium block truncate">
-                            {t.service}
-                          </span>
-                          <p className="text-xs font-body text-charcoal/75 line-clamp-3 mt-1.5 italic">
-                            "{t.review}"
+                          <p className="text-xs text-copper font-sans font-semibold">
+                            {item.service}
                           </p>
-                        </div>
-
-                        {/* Action buttons */}
-                        <div className="absolute top-3 right-3 flex items-center gap-1">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              togglePublishTestimonial(t.id)
-                              showToast(isPublished ? 'Testimonial hidden' : 'Testimonial published!')
-                            }}
-                            className={`p-1.5 rounded transition-colors ${
-                              isPublished ? 'text-emerald-700 hover:bg-emerald-50' : 'text-charcoal/40 hover:bg-charcoal/10'
-                            }`}
-                            title={isPublished ? 'Hide from public site' : 'Publish'}
-                          >
-                            {isPublished ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() => {
-                              if (confirm(`Remove testimonial from ${t.clientName}?`)) {
-                                removeTestimonial(t.id)
-                                showToast('Testimonial removed')
-                              }
-                            }}
-                            className="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors"
-                            title="Delete Testimonial"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
+                          <p className="text-xs sm:text-sm text-charcoal/80 font-body italic leading-relaxed pt-1">
+                            "{item.review}"
+                          </p>
                         </div>
                       </div>
                     )
@@ -1010,94 +1525,23 @@ export default function AdminDashboard({ isOpen, onClose }) {
                 </div>
               </div>
             )}
-
-            {/* ======================================================== */}
-            {/* TAB: DATABASE, BACKUP & RESET                            */}
-            {/* ======================================================== */}
-            {activeTab === 'settings' && (
-              <div className="max-w-2xl space-y-6">
-                <div>
-                  <h3 className="font-serif text-xl sm:text-2xl text-charcoal font-bold">
-                    Database & Backup Management
-                  </h3>
-                  <p className="text-xs text-charcoal-muted font-sans mt-0.5">
-                    Configure Supabase PostgreSQL backend, export backups, or reset content.
-                  </p>
-                </div>
-
-                <div className="space-y-4">
-                  {/* Supabase Status Card */}
-                  <div className="p-5 rounded-2xl bg-[#FAF8F5] border border-charcoal/10 flex items-center justify-between flex-wrap gap-4">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <Database className="w-4 h-4 text-copper" />
-                        <h4 className="font-sans font-bold text-xs text-charcoal uppercase">
-                          Supabase Backend Connection
-                        </h4>
-                      </div>
-                      <p className="text-[11px] text-charcoal-muted font-sans">
-                        Status: <strong className="text-charcoal capitalize">{supabaseStatus}</strong>
-                      </p>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => setShowDbConfig(true)}
-                      className="px-4 py-2 bg-charcoal hover:bg-copper text-white text-xs font-sans font-bold rounded-xl transition-colors"
-                    >
-                      Configure Keys
-                    </button>
-                  </div>
-
-                  {/* Export Backup */}
-                  <div className="p-5 rounded-2xl bg-[#FAF8F5] border border-charcoal/10 flex items-center justify-between flex-wrap gap-4">
-                    <div>
-                      <h4 className="font-sans font-bold text-xs text-charcoal uppercase">
-                        Export Website Backup (JSON)
-                      </h4>
-                      <p className="text-[11px] text-charcoal-muted font-sans mt-0.5">
-                        Download all current images, albums, and text configurations into a single file.
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={exportConfig}
-                      className="inline-flex items-center gap-2 px-4 py-2 bg-charcoal hover:bg-copper text-white text-xs font-sans font-bold rounded-xl transition-colors shadow-sm"
-                    >
-                      <Download className="w-3.5 h-3.5" />
-                      <span>Download Backup</span>
-                    </button>
-                  </div>
-
-                  {/* Reset to Defaults */}
-                  <div className="p-5 rounded-2xl bg-red-50/50 border border-red-200 flex items-center justify-between flex-wrap gap-4">
-                    <div>
-                      <h4 className="font-sans font-bold text-xs text-red-800 uppercase">
-                        Reset to Original Studio Defaults
-                      </h4>
-                      <p className="text-[11px] text-red-700/80 font-sans mt-0.5">
-                        Clear all custom uploaded photos and revert to original shoot 1, 2, 4 and wildlife collections.
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (confirm('Are you sure you want to reset all content back to original defaults?')) {
-                          resetToDefaults()
-                          showToast('Website reset to original studio defaults')
-                        }
-                      }}
-                      className="inline-flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-sans font-bold rounded-xl transition-colors shadow-sm"
-                    >
-                      <RefreshCw className="w-3.5 h-3.5" />
-                      <span>Reset Defaults</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
+          </main>
         </div>
+
+        {/* Toast Notification */}
+        <AnimatePresence>
+          {toastMessage && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 20 }}
+              className="absolute bottom-6 right-6 z-[200] px-4 py-2.5 bg-charcoal text-white text-xs font-sans font-bold rounded-xl shadow-2xl border border-white/20 flex items-center gap-2"
+            >
+              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+              <span>{toastMessage}</span>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </motion.div>
     </div>
   )
