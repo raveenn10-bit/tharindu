@@ -7,7 +7,10 @@ import { fadeUp } from '../lib/motion'
 
 export default function Testimonials() {
   const { content } = useContent()
-  const testimonialStories = content?.testimonials || []
+  const allStories = content?.testimonials || []
+
+  // Only display published testimonials on public site
+  const testimonialStories = allStories.filter((t) => t.is_published !== false)
 
   const [activeMobileStory, setActiveMobileStory] = useState(0)
 
@@ -20,6 +23,8 @@ export default function Testimonials() {
       setActiveMobileStory(newIndex)
     }
   }
+
+  if (testimonialStories.length === 0) return null
 
   return (
     <section id="testimonials" className="py-16 sm:py-24 md:py-32 bg-white relative border-t border-charcoal/5 overflow-hidden select-none">

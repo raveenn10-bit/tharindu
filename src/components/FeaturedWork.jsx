@@ -5,7 +5,10 @@ import { fadeUp, staggerContainer } from '../lib/motion'
 
 export default function FeaturedWork({ onOpenProject }) {
   const { content } = useContent()
-  const albums = content?.albums || []
+  const allAlbums = content?.albums || []
+
+  // Only display published albums on public site
+  const albums = allAlbums.filter((a) => a.is_published !== false)
 
   const [showAll, setShowAll] = useState(false)
   const [isMobilePaused, setIsMobilePaused] = useState(false)
