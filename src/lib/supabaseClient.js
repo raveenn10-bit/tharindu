@@ -8,7 +8,7 @@ export const SUPABASE_URL =
 export const SUPABASE_ANON_KEY =
   import.meta.env.VITE_SUPABASE_ANON_KEY ||
   import.meta.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-  'sb_publishable_NdxiUjzy-QZOJxhcbZL9Fw_94coK'
+  'sb_publishable_NdxiUjzy-QZOJxhcbZL9Fw_94coKcNR'
 
 export const BUCKET_NAME = 'portfolio-images'
 export const TABLE_PHOTOS = 'photos'
