@@ -1,13 +1,13 @@
 import React, { useRef, useState } from 'react'
 import { UploadCloud, Image, Video, Link, X, Check, Loader2 } from 'lucide-react'
-import { uploadMediaToSupabase, isSupabaseConfigured } from '../../lib/supabase'
+import { uploadPhotoToStorage } from '../../lib/supabaseClient'
 
 export default function ImageUploader({
   value,
   onChange,
-  label = 'Upload Image or Video',
+  label = 'Upload Photo',
   aspectRatio = 'aspect-[4/3]',
-  acceptMedia = 'image/*,video/*',
+  acceptMedia = 'image/*',
 }) {
   const fileInputRef = useRef(null)
   const [urlInput, setUrlInput] = useState('')
@@ -16,27 +16,24 @@ export default function ImageUploader({
   const [isUploading, setIsUploading] = useState(false)
   const [uploadError, setUploadError] = useState('')
 
-  const isVideo = value && (value.endsWith('.mp4') || value.endsWith('.webm') || value.endsWith('.mov') || value.includes('video'))
-
   const handleFile = async (file) => {
     if (!file) return
     setIsUploading(true)
     setUploadError('')
 
-    // 1. If Supabase is configured, upload directly to Supabase Storage
-    if (isSupabaseConfigured()) {
-      const { publicUrl, error } = await uploadMediaToSupabase(file)
-      if (publicUrl) {
-        onChange(publicUrl)
-        setIsUploading(false)
-        return
-      }
-      if (error) {
-        console.warn('Supabase storage upload fallback to local reader:', error)
-      }
+    // 1. Upload directly to Supabase Storage Bucket `portfolio-images`
+    const { publicUrl, error } = await uploadPhotoToStorage(file)
+    if (publicUrl) {
+      onChange(publicUrl)
+      setIsUploading(false)
+      return
     }
 
-    // 2. Local fallback: read as data URL
+    if (error) {
+      console.warn('Supabase storage upload error, fallback to local FileReader:', error)
+    }
+
+    // 2. Local fallback if offline: read as data URL
     const reader = new FileReader()
     reader.onload = (e) => {
       onChange(e.target.result)
@@ -73,27 +70,21 @@ export default function ImageUploader({
           <label className="block text-xs font-sans font-semibold text-charcoal/80 uppercase tracking-wider">
             {label}
           </label>
-          {isSupabaseConfigured() && (
-            <span className="text-[10px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full font-bold">
-              Supabase Storage Active
-            </span>
-          )}
+          <span className="text-[10px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full font-bold">
+            Supabase: portfolio-images
+          </span>
         </div>
       )}
 
       {isUploading ? (
         <div className={`${aspectRatio} w-full rounded-xl border-2 border-copper/40 bg-copper/5 flex flex-col items-center justify-center`}>
           <Loader2 className="w-8 h-8 text-copper animate-spin mb-2" />
-          <span className="text-xs font-sans font-bold text-copper">Uploading to Storage...</span>
+          <span className="text-xs font-sans font-bold text-copper">Uploading to Supabase Storage...</span>
         </div>
       ) : value ? (
         <div className="relative group rounded-xl overflow-hidden border border-charcoal/15 bg-sand/30">
           <div className={`${aspectRatio} w-full overflow-hidden flex items-center justify-center bg-charcoal/5`}>
-            {isVideo ? (
-              <video src={value} controls className="w-full h-full object-cover object-center" />
-            ) : (
-              <img src={value} alt="Media Preview" className="w-full h-full object-cover object-center" />
-            )}
+            <img src={value} alt="Photo Preview" className="w-full h-full object-cover object-center" />
           </div>
           <div className="absolute inset-0 bg-charcoal/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
             <button
@@ -107,7 +98,7 @@ export default function ImageUploader({
               type="button"
               onClick={() => onChange('')}
               className="p-1.5 bg-red-600 text-white rounded shadow hover:bg-red-700 transition-colors"
-              title="Remove Media"
+              title="Remove Photo"
             >
               <X className="w-4 h-4" />
             </button>
@@ -129,10 +120,10 @@ export default function ImageUploader({
           >
             <UploadCloud className="w-8 h-8 text-charcoal/40 mb-2" />
             <p className="text-xs font-sans font-medium text-charcoal/80 text-center">
-              Click or Drag & Drop photo / video here
+              Click or Drag & Drop photo here
             </p>
             <p className="text-[10px] font-sans text-charcoal-muted mt-0.5">
-              JPG, PNG, WEBP, MP4, MOV supported
+              JPG, PNG, WEBP supported
             </p>
           </div>
 
@@ -171,7 +162,7 @@ export default function ImageUploader({
                 onClick={() => setIsEnteringUrl(true)}
                 className="inline-flex items-center gap-1 text-copper hover:underline text-[11px] font-medium"
               >
-                <Link className="w-3 h-3" /> Or paste media URL
+                <Link className="w-3 h-3" /> Or paste photo URL
               </button>
             )}
           </div>

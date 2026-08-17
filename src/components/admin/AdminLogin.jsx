@@ -1,24 +1,44 @@
 import React, { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Lock, KeyRound, ArrowRight, X, AlertCircle } from 'lucide-react'
+import { Lock, Mail, KeyRound, ArrowRight, X, AlertCircle, Loader2 } from 'lucide-react'
 import { useContent } from '../../context/ContentContext'
 
 export default function AdminLogin({ isOpen, onClose, onSuccess }) {
   const { login } = useContent()
+  const [loginMode, setLoginMode] = useState('email') // 'email' or 'passcode'
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [passcode, setPasscode] = useState('')
   const [error, setError] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
 
   if (!isOpen) return null
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
-    const res = login(passcode)
-    if (res.success) {
-      setPasscode('')
-      if (onSuccess) onSuccess()
-    } else {
-      setError(res.error || 'Access denied')
+    setIsLoading(true)
+
+    try {
+      let res
+      if (loginMode === 'email') {
+        res = await login(email, password)
+      } else {
+        res = await login(passcode)
+      }
+
+      if (res && res.success) {
+        setEmail('')
+        setPassword('')
+        setPasscode('')
+        if (onSuccess) onSuccess()
+      } else {
+        setError(res?.error || 'Access denied. Please check your credentials.')
+      }
+    } catch (err) {
+      setError(err.message || 'Login failed')
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -45,11 +65,39 @@ export default function AdminLogin({ isOpen, onClose, onSuccess }) {
             <Lock className="w-6 h-6" />
           </div>
           <h3 className="font-serif text-xl sm:text-2xl text-charcoal font-bold tracking-tight uppercase">
-            Owner Access
+            Admin Portal
           </h3>
           <p className="text-xs text-charcoal-muted font-sans mt-1">
-            Tilnogz Photography Content Management Panel
+            Supabase Protected Owner Management Panel
           </p>
+
+          {/* Mode Switcher */}
+          <div className="mt-4 flex bg-charcoal/5 p-1 rounded-xl">
+            <button
+              type="button"
+              onClick={() => {
+                setLoginMode('email')
+                setError('')
+              }}
+              className={`flex-1 py-1.5 text-xs font-sans font-bold uppercase rounded-lg transition-all ${
+                loginMode === 'email' ? 'bg-white text-charcoal shadow-sm' : 'text-charcoal/60'
+              }`}
+            >
+              Supabase Auth
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setLoginMode('passcode')
+                setError('')
+              }}
+              className={`flex-1 py-1.5 text-xs font-sans font-bold uppercase rounded-lg transition-all ${
+                loginMode === 'passcode' ? 'bg-white text-charcoal shadow-sm' : 'text-charcoal/60'
+              }`}
+            >
+              Master PIN
+            </button>
+          </div>
         </div>
 
         {/* Form Body */}
@@ -61,30 +109,76 @@ export default function AdminLogin({ isOpen, onClose, onSuccess }) {
             </div>
           )}
 
-          <div className="space-y-1.5">
-            <label className="block text-xs font-sans font-semibold text-charcoal/80 uppercase tracking-wider">
-              Enter Owner Passcode
-            </label>
-            <div className="relative">
-              <KeyRound className="w-4 h-4 text-charcoal/40 absolute left-3.5 top-1/2 -translate-y-1/2" />
-              <input
-                type="password"
-                required
-                autoFocus
-                value={passcode}
-                onChange={(e) => setPasscode(e.target.value)}
-                placeholder="••••••••••••"
-                className="w-full pl-10 pr-4 py-3 bg-[#FAF8F5] border border-charcoal/20 rounded-xl text-sm font-sans text-charcoal focus:outline-none focus:border-copper focus:bg-white transition-colors"
-              />
+          {loginMode === 'email' ? (
+            <>
+              <div className="space-y-1.5">
+                <label className="block text-xs font-sans font-semibold text-charcoal/80 uppercase tracking-wider">
+                  Admin Email
+                </label>
+                <div className="relative">
+                  <Mail className="w-4 h-4 text-charcoal/40 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="email"
+                    required
+                    autoFocus
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="admin@tilnogz.com"
+                    className="w-full pl-10 pr-4 py-3 bg-[#FAF8F5] border border-charcoal/20 rounded-xl text-xs font-sans text-charcoal focus:outline-none focus:border-copper focus:bg-white transition-colors"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="block text-xs font-sans font-semibold text-charcoal/80 uppercase tracking-wider">
+                  Password
+                </label>
+                <div className="relative">
+                  <KeyRound className="w-4 h-4 text-charcoal/40 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="password"
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••••••"
+                    className="w-full pl-10 pr-4 py-3 bg-[#FAF8F5] border border-charcoal/20 rounded-xl text-xs font-sans text-charcoal focus:outline-none focus:border-copper focus:bg-white transition-colors"
+                  />
+                </div>
+              </div>
+            </>
+          ) : (
+            <div className="space-y-1.5">
+              <label className="block text-xs font-sans font-semibold text-charcoal/80 uppercase tracking-wider">
+                Enter Master Passcode
+              </label>
+              <div className="relative">
+                <KeyRound className="w-4 h-4 text-charcoal/40 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <input
+                  type="password"
+                  required
+                  autoFocus
+                  value={passcode}
+                  onChange={(e) => setPasscode(e.target.value)}
+                  placeholder="••••••••••••"
+                  className="w-full pl-10 pr-4 py-3 bg-[#FAF8F5] border border-charcoal/20 rounded-xl text-sm font-sans text-charcoal focus:outline-none focus:border-copper focus:bg-white transition-colors"
+                />
+              </div>
             </div>
-          </div>
+          )}
 
           <button
             type="submit"
-            className="w-full py-3.5 bg-charcoal hover:bg-copper text-white text-xs font-sans font-bold tracking-widest uppercase rounded-xl transition-colors flex items-center justify-center gap-2 shadow-md"
+            disabled={isLoading}
+            className="w-full py-3.5 bg-charcoal hover:bg-copper text-white text-xs font-sans font-bold tracking-widest uppercase rounded-xl transition-colors flex items-center justify-center gap-2 shadow-md disabled:opacity-50"
           >
-            <span>Unlock Dashboard</span>
-            <ArrowRight className="w-4 h-4" />
+            {isLoading ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <>
+                <span>Sign In to Dashboard</span>
+                <ArrowRight className="w-4 h-4" />
+              </>
+            )}
           </button>
         </form>
       </motion.div>

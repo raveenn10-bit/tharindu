@@ -6,10 +6,10 @@ import { fadeUp, staggerContainer } from '../lib/motion'
 const BATCH_SIZE = 9
 
 export default function FeaturedWork({ onOpenProject }) {
-  const { content } = useContent()
+  const { content, isLoading } = useContent()
   const allAlbums = content?.albums || []
 
-  // Only display published albums on public site
+  // Only display published photos on public portfolio site
   const baseAlbums = allAlbums.filter((a) => a.is_published !== false)
 
   const [selectedCategory, setSelectedCategory] = useState('All')
@@ -45,7 +45,7 @@ export default function FeaturedWork({ onOpenProject }) {
     if (isSectionHovered || filteredAlbums.length <= 1) return
 
     const interval = setInterval(() => {
-      setBatchIndex((prev) => (prev + 1))
+      setBatchIndex((prev) => prev + 1)
     }, 2000)
 
     return () => clearInterval(interval)
@@ -56,12 +56,10 @@ export default function FeaturedWork({ onOpenProject }) {
     const total = filteredAlbums.length
     if (total === 0) return []
     if (total <= BATCH_SIZE) {
-      // If 9 or fewer photos, rotate/shuffle their positions
       const shift = batchIndex % total
       return [...filteredAlbums.slice(shift), ...filteredAlbums.slice(0, shift)]
     }
 
-    // Pick 9 photos sequentially with wrap-around
     const start = (batchIndex * BATCH_SIZE) % total
     const result = []
     for (let i = 0; i < BATCH_SIZE; i++) {
@@ -121,115 +119,131 @@ export default function FeaturedWork({ onOpenProject }) {
           })}
         </div>
 
-        {/* ======================================================== */}
-        {/* MOBILE ONLY: Smooth Continuous Horizontal Auto-Scroll    */}
-        {/* ======================================================== */}
-        <div
-          className="block md:hidden relative w-full overflow-hidden -mx-4 px-4"
-          onTouchStart={() => setIsMobilePaused(true)}
-          onTouchEnd={() => setIsMobilePaused(false)}
-          onMouseEnter={() => setIsMobilePaused(true)}
-          onMouseLeave={() => setIsMobilePaused(false)}
-        >
-          <motion.div
-            className="flex gap-4 w-max cursor-pointer will-change-transform"
-            animate={
-              isMobilePaused
-                ? {}
-                : {
-                    x: ['0%', '-50%'],
-                  }
-            }
-            transition={{
-              x: {
-                repeat: Infinity,
-                repeatType: 'loop',
-                duration: 25,
-                ease: 'linear',
-              },
-            }}
-          >
-            {infiniteMobileAlbums.map((item) => {
-              const imgSrc = typeof item.image === 'string' ? item.image : item.image?.src || ''
-              return (
-                <div
-                  key={item.uniqueKey}
-                  onClick={() => onOpenProject && onOpenProject(item)}
-                  className="flex-shrink-0 w-60 aspect-[4/5] rounded-sm overflow-hidden bg-charcoal relative shadow-md"
-                >
-                  {/* Thumbnail Image */}
-                  <img
-                    src={imgSrc}
-                    alt={item.title}
-                    className="w-full h-full object-cover object-center pointer-events-none"
-                    loading="lazy"
-                    decoding="async"
-                  />
+        {/* Loading Skeleton */}
+        {isLoading && filteredAlbums.length === 0 ? (
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+            {[...Array(9)].map((_, i) => (
+              <div
+                key={i}
+                className="aspect-[4/5] bg-charcoal/5 rounded-sm animate-pulse flex items-center justify-center"
+              >
+                <span className="w-8 h-8 rounded-full border-2 border-charcoal/20 border-t-copper animate-spin" />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <>
+            {/* ======================================================== */}
+            {/* MOBILE ONLY: Smooth Continuous Horizontal Auto-Scroll    */}
+            {/* ======================================================== */}
+            <div
+              className="block md:hidden relative w-full overflow-hidden -mx-4 px-4"
+              onTouchStart={() => setIsMobilePaused(true)}
+              onTouchEnd={() => setIsMobilePaused(false)}
+              onMouseEnter={() => setIsMobilePaused(true)}
+              onMouseLeave={() => setIsMobilePaused(false)}
+            >
+              <motion.div
+                className="flex gap-4 w-max cursor-pointer will-change-transform"
+                animate={
+                  isMobilePaused
+                    ? {}
+                    : {
+                        x: ['0%', '-50%'],
+                      }
+                }
+                transition={{
+                  x: {
+                    repeat: Infinity,
+                    repeatType: 'loop',
+                    duration: 25,
+                    ease: 'linear',
+                  },
+                }}
+              >
+                {infiniteMobileAlbums.map((item) => {
+                  const imgSrc = item.image_url || (typeof item.image === 'string' ? item.image : item.image?.src || '')
+                  return (
+                    <div
+                      key={item.uniqueKey}
+                      onClick={() => onOpenProject && onOpenProject({ ...item, image: imgSrc })}
+                      className="flex-shrink-0 w-60 aspect-[4/5] rounded-sm overflow-hidden bg-charcoal relative shadow-md"
+                    >
+                      {/* Thumbnail Image */}
+                      <img
+                        src={imgSrc}
+                        alt={item.title}
+                        className="w-full h-full object-cover object-center pointer-events-none"
+                        loading="lazy"
+                        decoding="async"
+                      />
 
-                  {/* Bottom Gradient Overlay with Title */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-charcoal/90 via-charcoal/20 to-transparent flex flex-col justify-end p-4 text-paper">
-                    <span className="text-[10px] font-sans font-bold tracking-widest text-copper-light uppercase mb-1">
-                      {item.category}
-                    </span>
-                    <h3 className="font-serif text-base text-white tracking-wide uppercase font-medium truncate">
-                      {item.title}
-                    </h3>
-                  </div>
-                </div>
-              )
-            })}
-          </motion.div>
-        </div>
-
-        {/* ======================================================== */}
-        {/* DESKTOP: 3x3 Grid of 9 Photos Cycling Every 2 Seconds    */}
-        {/* ======================================================== */}
-        <div className="hidden md:block">
-          <motion.div
-            layout
-            variants={staggerContainer(0.04, 0.02)}
-            initial="hidden"
-            animate="visible"
-            className="grid grid-cols-3 gap-6 md:gap-7"
-          >
-            <AnimatePresence mode="popLayout">
-              {activePhotos.map((item, slotIndex) => {
-                const imgSrc = typeof item.image === 'string' ? item.image : item.image?.src || ''
-                return (
-                  <motion.div
-                    key={`slot-${slotIndex}-${item.id}`}
-                    layout
-                    initial={{ opacity: 0, scale: 0.94 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.94 }}
-                    transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-                    onClick={() => onOpenProject && onOpenProject(item)}
-                    className="group relative cursor-pointer overflow-hidden bg-charcoal aspect-[4/5] shadow-sm rounded-sm"
-                  >
-                    {/* High Performance Thumbnail Image */}
-                    <img
-                      src={imgSrc}
-                      alt={item.title}
-                      className="w-full h-full object-cover object-center group-hover:scale-105 group-hover:opacity-85 transition-all duration-700 ease-out"
-                      loading="lazy"
-                      decoding="async"
-                    />
-
-                    {/* Hover Caption Overlay */}
-                    <div className="absolute inset-0 bg-charcoal/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center p-6 text-center text-paper">
-                      <h3 className="font-serif text-lg lg:text-xl text-white tracking-wide uppercase mb-1.5">
-                        {item.title}
-                      </h3>
-                      <span className="text-xs font-sans text-paper/80 uppercase tracking-widest">
-                        {item.category}
-                      </span>
+                      {/* Bottom Gradient Overlay with Title */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-charcoal/90 via-charcoal/20 to-transparent flex flex-col justify-end p-4 text-paper">
+                        <span className="text-[10px] font-sans font-bold tracking-widest text-copper-light uppercase mb-1">
+                          {item.category}
+                        </span>
+                        <h3 className="font-serif text-base text-white tracking-wide uppercase font-medium truncate">
+                          {item.title}
+                        </h3>
+                      </div>
                     </div>
-                  </motion.div>
-                )
-              })}
-            </AnimatePresence>
-          </motion.div>
-        </div>
+                  )
+                })}
+              </motion.div>
+            </div>
+
+            {/* ======================================================== */}
+            {/* DESKTOP: 3x3 Grid of 9 Photos Cycling Every 2 Seconds    */}
+            {/* ======================================================== */}
+            <div className="hidden md:block">
+              <motion.div
+                layout
+                variants={staggerContainer(0.04, 0.02)}
+                initial="hidden"
+                animate="visible"
+                className="grid grid-cols-3 gap-6 md:gap-7"
+              >
+                <AnimatePresence mode="popLayout">
+                  {activePhotos.map((item, slotIndex) => {
+                    const imgSrc = item.image_url || (typeof item.image === 'string' ? item.image : item.image?.src || '')
+                    return (
+                      <motion.div
+                        key={`slot-${slotIndex}-${item.id}`}
+                        layout
+                        initial={{ opacity: 0, scale: 0.94 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.94 }}
+                        transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+                        onClick={() => onOpenProject && onOpenProject({ ...item, image: imgSrc })}
+                        className="group relative cursor-pointer overflow-hidden bg-charcoal aspect-[4/5] shadow-sm rounded-sm"
+                      >
+                        {/* High Performance Thumbnail Image */}
+                        <img
+                          src={imgSrc}
+                          alt={item.title}
+                          className="w-full h-full object-cover object-center group-hover:scale-105 group-hover:opacity-85 transition-all duration-700 ease-out"
+                          loading="lazy"
+                          decoding="async"
+                        />
+
+                        {/* Hover Caption Overlay */}
+                        <div className="absolute inset-0 bg-charcoal/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center p-6 text-center text-paper">
+                          <h3 className="font-serif text-lg lg:text-xl text-white tracking-wide uppercase mb-1.5">
+                            {item.title}
+                          </h3>
+                          <span className="text-xs font-sans text-paper/80 uppercase tracking-widest">
+                            {item.category}
+                          </span>
+                        </div>
+                      </motion.div>
+                    )
+                  })}
+                </AnimatePresence>
+              </motion.div>
+            </div>
+          </>
+        )}
       </div>
     </section>
   )

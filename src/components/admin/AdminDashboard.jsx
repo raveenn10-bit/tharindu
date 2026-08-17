@@ -605,7 +605,7 @@ export default function AdminDashboard({ isOpen, onClose }) {
                       >
                         <div className="aspect-[4/5] overflow-hidden bg-charcoal relative">
                           <img
-                            src={album.image}
+                            src={album.image_url || album.image}
                             alt={album.title}
                             className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
                           />
@@ -640,7 +640,7 @@ export default function AdminDashboard({ isOpen, onClose }) {
                                 type="button"
                                 onClick={() => {
                                   togglePublishAlbum(album.id)
-                                  showToast(isPublished ? 'Album hidden from public view' : 'Album published live!')
+                                  showToast(isPublished ? 'Photo hidden from public site' : 'Photo published live!')
                                 }}
                                 className={`p-1.5 rounded text-white shadow ${isPublished ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-charcoal hover:bg-charcoal/80'}`}
                                 title={isPublished ? 'Hide from public site' : 'Publish live'}
@@ -655,20 +655,20 @@ export default function AdminDashboard({ isOpen, onClose }) {
                                 type="button"
                                 onClick={() => setEditingAlbum(album)}
                                 className="p-1.5 bg-white text-charcoal hover:bg-copper hover:text-white rounded shadow transition-colors"
-                                title="Edit Album Details"
+                                title="Edit Photo Details"
                               >
                                 <Edit className="w-3.5 h-3.5" />
                               </button>
                               <button
                                 type="button"
                                 onClick={() => {
-                                  if (confirm(`Delete album "${album.title}"?`)) {
-                                    removeAlbum(album.id)
-                                    showToast('Album deleted')
+                                  if (confirm(`Delete "${album.title}" from database and storage?`)) {
+                                    removeAlbum(album.id, album.image_url || album.image)
+                                    showToast('Photo deleted from database & storage')
                                   }
                                 }}
                                 className="p-1.5 bg-red-600 hover:bg-red-700 text-white rounded shadow transition-colors"
-                                title="Delete Album"
+                                title="Delete Photo"
                               >
                                 <Trash2 className="w-3.5 h-3.5" />
                               </button>
