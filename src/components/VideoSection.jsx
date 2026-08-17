@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Play, Pause, Volume2, VolumeX, Maximize2, Film, Sparkles, X } from 'lucide-react'
+import { Play, Pause, Volume2, VolumeX, Maximize2, Film, Sparkles, X, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useContent } from '../context/ContentContext'
 import { fadeUp } from '../lib/motion'
 
@@ -50,7 +50,7 @@ function ReelCard({ video, onOpenModal }) {
   return (
     <motion.div
       variants={fadeUp}
-      className="group relative rounded-2xl sm:rounded-3xl overflow-hidden bg-charcoal shadow-xl hover:shadow-2xl border border-charcoal/15 transition-all duration-500 hover:-translate-y-1.5 flex flex-col"
+      className="flex-shrink-0 w-[80vw] sm:w-[50vw] md:w-auto snap-center group relative rounded-2xl sm:rounded-3xl overflow-hidden bg-charcoal shadow-xl hover:shadow-2xl border border-charcoal/15 transition-all duration-500 hover:-translate-y-1.5 flex flex-col"
     >
       {/* 9:16 Aspect Video Container */}
       <div className="relative aspect-[9/16] w-full overflow-hidden bg-black cursor-pointer">
@@ -141,6 +141,8 @@ function ReelCard({ video, onOpenModal }) {
 
 export default function VideoSection() {
   const { content } = useContent()
+  const scrollContainerRef = useRef(null)
+
   const rawVideos = content?.videos || [
     {
       id: 'vid-1',
@@ -173,8 +175,28 @@ export default function VideoSection() {
 
   const publishedVideos = rawVideos.filter((v) => v.is_published !== false)
   const [modalVideo, setModalVideo] = useState(null)
+  const [activeIndex, setActiveIndex] = useState(0)
 
   if (publishedVideos.length === 0) return null
+
+  const scrollToIndex = (idx) => {
+    if (!scrollContainerRef.current) return
+    const container = scrollContainerRef.current
+    const cards = container.children
+    if (cards[idx]) {
+      cards[idx].scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' })
+      setActiveIndex(idx)
+    }
+  }
+
+  const handleScroll = () => {
+    if (!scrollContainerRef.current) return
+    const container = scrollContainerRef.current
+    const scrollLeft = container.scrollLeft
+    const cardWidth = container.children[0]?.offsetWidth || 1
+    const newIdx = Math.round(scrollLeft / cardWidth)
+    setActiveIndex(Math.min(newIdx, publishedVideos.length - 1))
+  }
 
   return (
     <section
@@ -202,8 +224,12 @@ export default function VideoSection() {
           </p>
         </motion.div>
 
-        {/* 3 Synchronized AutoPlaying 9:16 Reels Side-by-Side */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 sm:gap-8 max-w-6xl mx-auto items-stretch">
+        {/* 3 Synchronized AutoPlaying 9:16 Reels: Horizontal Scroll on Mobile, 3-Col Grid on Desktop */}
+        <div
+          ref={scrollContainerRef}
+          onScroll={handleScroll}
+          className="flex md:grid md:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 max-w-6xl mx-auto items-stretch overflow-x-auto md:overflow-x-visible snap-x snap-mandatory scrollbar-none -mx-4 px-4 sm:mx-0 sm:px-0 pb-4 md:pb-0"
+        >
           {publishedVideos.slice(0, 3).map((vid) => (
             <ReelCard
               key={vid.id}
@@ -211,6 +237,30 @@ export default function VideoSection() {
               onOpenModal={(v) => setModalVideo(v)}
             />
           ))}
+        </div>
+
+        {/* Mobile Swipe Pagination & Navigation Hint */}
+        <div className="flex md:hidden flex-col items-center justify-center gap-2.5 mt-3">
+          {/* Dot Indicators */}
+          <div className="flex items-center gap-2">
+            {publishedVideos.slice(0, 3).map((_, i) => (
+              <button
+                key={i}
+                type="button"
+                onClick={() => scrollToIndex(i)}
+                className={`transition-all duration-300 rounded-full ${
+                  activeIndex === i
+                    ? 'w-6 h-1.5 bg-copper'
+                    : 'w-1.5 h-1.5 bg-charcoal/20 hover:bg-charcoal/40'
+                }`}
+                aria-label={`Go to reel ${i + 1}`}
+              />
+            ))}
+          </div>
+
+          <span className="text-[11px] font-sans text-charcoal-muted tracking-wide flex items-center gap-1.5">
+            <span>← Swipe to watch all reels →</span>
+          </span>
         </div>
       </div>
 
