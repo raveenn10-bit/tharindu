@@ -4,6 +4,7 @@ import Navbar from './components/Navbar'
 import Hero from './components/Hero'
 import About from './components/About'
 import FeaturedWork from './components/FeaturedWork'
+import VideoSection from './components/VideoSection'
 import Testimonials from './components/Testimonials'
 import PricingPlans from './components/PricingPlans'
 import FullWidthPhotoStrip from './components/FullWidthPhotoStrip'
@@ -109,13 +110,16 @@ function MainSite() {
         {/* 2. 2-Column About Artist & Photographer Portrait */}
         <About />
 
-        {/* 3. ALBUMS Portfolio Grid with Hoverer Effect */}
+        {/* 3. ALBUMS Portfolio Grid with 9-Photo 2s Auto-Cycle */}
         <FeaturedWork onOpenProject={handleOpenProject} />
 
-        {/* 4. TESTIMONIALS Alternating Story Blocks */}
+        {/* 4. CINEMATOGRAPHY Video Showcase */}
+        <VideoSection />
+
+        {/* 5. TESTIMONIALS Alternating Story Blocks */}
         <Testimonials />
 
-        {/* 5. 3 Curated Session Plans & Investment */}
+        {/* 6. 3 Curated Session Plans & Investment */}
         <PricingPlans />
 
         {/* 6. Full-Width Edge-to-Edge 7-Image Photo Strip */}

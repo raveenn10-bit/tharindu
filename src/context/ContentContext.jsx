@@ -13,11 +13,11 @@ import {
   TABLE_PHOTOS,
 } from '../lib/supabaseClient'
 
-const STORAGE_KEY = 'tilnogz_content_store_v5'
+const STORAGE_KEY = 'tilnogz_content_store_v7'
 const AUTH_KEY = 'tilnogz_admin_auth'
 const DEFAULT_PASSCODE = 'tilnogz2026'
 
-// 3 curated client testimonials (Female only: Imalka Sandeepani, Maheshika, Anju)
+// 3 curated client testimonials: Imalka Sandeepani, Maheshika, Pasindu Dananjaya
 const defaultTestimonials = [
   {
     id: 't-1',
@@ -43,12 +43,12 @@ const defaultTestimonials = [
   },
   {
     id: 't-3',
-    clientName: 'Anju',
-    service: 'Pre-Wedding & Couple Coverage',
+    clientName: 'Pasindu Dananjaya',
+    service: 'Vehicle & Sports Action Session',
     location: 'Colombo, Sri Lanka',
-    image: '/photos/field/fd-04.jpg',
+    image: '/photos/pasindu-dananjaya.jpg',
     review:
-      'A huge thank goes to Tilnogz Photography for doing our pre-wedding shoot in the best way a client can think of 💖 All his clicks speak out his talent, passion, and dedication he puts into the work. We’re also grateful for his friendly and supportive service and for the faster outputs. All the very best to rank higher and higher in the industry! 😊',
+      'A huge shoutout to Tilnogz Photography for capturing my bike and action shots with such precision and energy! All his clicks speak out his talent, passion, and dedication he puts into the work. We’re also grateful for his friendly and supportive service and for the faster outputs. All the very best to rank higher and higher in the industry! 🔥🏍️',
     is_published: true,
     sort_order: 3,
   },
@@ -74,6 +74,17 @@ const initialContentState = {
     sort_order: idx + 1,
     is_published: true,
   })),
+  videos: [
+    {
+      id: 'vid-1',
+      title: 'Cinematic Pre-Shoot Motion Story',
+      category: 'Pre-Wedding / Wedding Cinematography',
+      video_url: '/videos/tilnogz-cinematic-01.mp4',
+      is_published: true,
+      description:
+        'Atmospheric romance, natural light storytelling, and decisive emotional moments captured in motion by Tilnogz Photography.',
+    },
+  ],
   testimonials: defaultTestimonials,
 }
 
@@ -393,6 +404,43 @@ export function ContentProvider({ children }) {
     }
   }
 
+  // --- Video Actions ---
+  const addVideo = (newVideo) => {
+    const vWithId = {
+      id: newVideo.id || `vid-${Date.now()}`,
+      title: newVideo.title,
+      category: newVideo.category || 'Pre-Wedding / Wedding Cinematography',
+      video_url: newVideo.video_url || newVideo.video,
+      description: newVideo.description || '',
+      is_published: true,
+    }
+    setContent((prev) => ({
+      ...prev,
+      videos: [vWithId, ...(prev.videos || [])],
+    }))
+  }
+
+  const removeVideo = (id) => {
+    setContent((prev) => ({
+      ...prev,
+      videos: (prev.videos || []).filter((v) => v.id !== id),
+    }))
+  }
+
+  const updateVideo = (id, updates) => {
+    setContent((prev) => ({
+      ...prev,
+      videos: (prev.videos || []).map((v) => (v.id === id ? { ...v, ...updates } : v)),
+    }))
+  }
+
+  const togglePublishVideo = (id) => {
+    const target = (content.videos || []).find((v) => v.id === id)
+    if (target) {
+      updateVideo(id, { is_published: !target.is_published })
+    }
+  }
+
   // --- Backup & Reset Actions ---
   const resetToDefaults = () => {
     setContent(initialContentState)
@@ -442,6 +490,10 @@ export function ContentProvider({ children }) {
         togglePublishAlbum,
         reorderAlbums,
         shuffleAlbums,
+        addVideo,
+        removeVideo,
+        updateVideo,
+        togglePublishVideo,
         addTestimonial,
         removeTestimonial,
         updateTestimonial,

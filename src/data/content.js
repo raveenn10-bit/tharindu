@@ -51,6 +51,7 @@ export const getWhatsAppLink = (customMsg = contact.defaultMessage) => {
 export const navLinks = [
   { label: 'HOME', href: '#' },
   { label: 'ALBUMS', href: '#work' },
+  { label: 'VIDEOS', href: '#videos' },
   { label: 'ABOUT', href: '#about' },
   { label: 'SERVICES', href: '#services' },
   { label: 'TESTIMONIALS', href: '#testimonials' },
