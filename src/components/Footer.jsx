@@ -1,7 +1,7 @@
 import React from 'react'
 import { motion } from 'framer-motion'
-import { Facebook, MessageSquare } from 'lucide-react'
-import { contact, getWhatsAppLink } from '../data/content'
+import { Facebook, MessageSquare, MapPin } from 'lucide-react'
+import { contact, getWhatsAppLink, brand } from '../data/content'
 import Logo from './Logo'
 import { fadeUp, staggerContainer } from '../lib/motion'
 
@@ -60,12 +60,24 @@ export default function Footer() {
           <a href="#plans" className="hover:text-copper transition-colors">
             Plans
           </a>
-          <a href="#contact" className="hover:text-copper transition-colors">
-            Contact
+          <a href="#testimonials" className="hover:text-copper transition-colors">
+            Testimonials
           </a>
         </motion.nav>
 
-        {/* Contact Info Block */}
+        {/* 5 Services List */}
+        <motion.div variants={fadeUp} className="flex flex-wrap justify-center gap-x-4 gap-y-1.5 text-[11px] sm:text-xs font-sans text-charcoal/70 mb-6 sm:mb-8">
+          {brand.services.map((svc, idx) => (
+            <span key={idx} className="flex items-center gap-2">
+              <span>{svc}</span>
+              {idx < brand.services.length - 1 && (
+                <span className="text-copper font-bold">·</span>
+              )}
+            </span>
+          ))}
+        </motion.div>
+
+        {/* Contact Info & Address Block */}
         <motion.div variants={fadeUp} className="space-y-1.5 sm:space-y-2 mb-8 sm:mb-12 text-xs sm:text-sm font-sans text-charcoal/80">
           <p className="font-semibold text-copper tracking-wider uppercase text-[10px] sm:text-[11px]">
             Get in Touch!
@@ -78,8 +90,9 @@ export default function Footer() {
               {contact.phoneDisplay}
             </a>
           </p>
-          <p className="text-[11px] sm:text-xs text-charcoal-muted">
-            Galle / Hikkaduwa / Colombo, Sri Lanka
+          <p className="flex items-center justify-center gap-1.5 text-xs text-charcoal-muted font-medium">
+            <MapPin className="w-3.5 h-3.5 text-copper" />
+            <span>Address: Colombo 7, Sri Lanka</span>
           </p>
         </motion.div>
 
