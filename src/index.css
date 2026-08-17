@@ -1,0 +1,105 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --bg-paper: #FAF8F5;
+    --bg-pure: #FFFFFF;
+    --text-charcoal: #111111;
+    --text-muted: #666460;
+    --accent-copper: #C4704F;
+    --border-subtle: rgba(18, 18, 18, 0.08);
+  }
+
+  html {
+    background-color: var(--bg-paper);
+    color: var(--text-charcoal);
+    font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: var(--bg-paper);
+    color: var(--text-charcoal);
+    overflow-x: hidden;
+    min-height: 100vh;
+  }
+
+  /* Typography descender reserve */
+  .descender-safe {
+    line-height: 1.15;
+    padding-bottom: 0.12em;
+    margin-bottom: -0.12em;
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #FAF8F5;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #D5CFC6;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #B8B0A4;
+}
+
+/* Fine Editorial Paper Texture */
+.paper-texture {
+  background-color: #FAF8F5;
+  background-image: radial-gradient(rgba(0, 0, 0, 0.03) 1px, transparent 0);
+  background-size: 24px 24px;
+}
+
+/* Subtle image shimmer placeholder */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.img-placeholder {
+  background: linear-gradient(
+    90deg,
+    rgba(240, 237, 230, 0.6) 25%,
+    rgba(250, 248, 243, 0.9) 37%,
+    rgba(240, 237, 230, 0.6) 63%
+  );
+  background-size: 400% 100%;
+  animation: shimmer 1.6s ease-in-out infinite;
+}
+
+/* Hide scrollbar for horizontal drag strips */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Text reveal line */
+.clip-text-reveal {
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 0% 100%);
+}
+
+/* Subtle horizontal border line styling */
+.editorial-line {
+  height: 1px;
+  background: linear-gradient(90deg, rgba(18, 18, 18, 0.15) 0%, rgba(18, 18, 18, 0.05) 100%);
+}
