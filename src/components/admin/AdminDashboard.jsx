@@ -27,6 +27,7 @@ import {
   Key,
   ShieldCheck,
   Video,
+  Shuffle,
 } from 'lucide-react'
 import { useContent } from '../../context/ContentContext'
 import { getSupabaseConfig, saveSupabaseConfig } from '../../lib/supabase'
@@ -44,6 +45,7 @@ export default function AdminDashboard({ isOpen, onClose }) {
     updateAlbum,
     togglePublishAlbum,
     reorderAlbums,
+    shuffleAlbums,
     addTestimonial,
     removeTestimonial,
     updateTestimonial,
@@ -394,14 +396,29 @@ export default function AdminDashboard({ isOpen, onClose }) {
                     </p>
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={() => setIsAddingAlbum(true)}
-                    className="inline-flex items-center gap-2 px-4 py-2.5 bg-copper hover:bg-copper-dark text-white text-xs font-sans font-bold tracking-wider uppercase rounded-xl transition-colors shadow-md"
-                  >
-                    <Plus className="w-4 h-4" />
-                    <span>Upload New Album</span>
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        shuffleAlbums()
+                        showToast('Albums shuffled randomly!')
+                      }}
+                      className="inline-flex items-center gap-2 px-3.5 py-2.5 bg-sand hover:bg-sand-dark text-charcoal text-xs font-sans font-bold tracking-wider uppercase rounded-xl transition-colors shadow-sm"
+                      title="Randomly shuffle all albums"
+                    >
+                      <Shuffle className="w-4 h-4 text-copper" />
+                      <span>Shuffle Order</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setIsAddingAlbum(true)}
+                      className="inline-flex items-center gap-2 px-4 py-2.5 bg-copper hover:bg-copper-dark text-white text-xs font-sans font-bold tracking-wider uppercase rounded-xl transition-colors shadow-md"
+                    >
+                      <Plus className="w-4 h-4" />
+                      <span>Upload New Album</span>
+                    </button>
+                  </div>
                 </div>
 
                 {/* Add Album Form */}

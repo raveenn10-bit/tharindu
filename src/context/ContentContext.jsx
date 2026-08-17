@@ -417,6 +417,35 @@ export function ContentProvider({ children }) {
     }
   }
 
+  // Shuffle Albums Order
+  const shuffleAlbums = async () => {
+    const shuffled = [...content.albums]
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    const updated = shuffled.map((item, idx) => ({
+      ...item,
+      sort_order: idx + 1,
+    }))
+    setContent((prev) => ({
+      ...prev,
+      albums: updated,
+    }))
+
+    const config = getSupabaseConfig()
+    if (config.url && config.anonKey) {
+      try {
+        const client = createClient(config.url, config.anonKey)
+        for (const item of updated) {
+          await client.from('albums').update({ sort_order: item.sort_order }).eq('id', item.id)
+        }
+      } catch (e) {
+        console.error('Supabase album shuffle error:', e)
+      }
+    }
+  }
+
   // --- Testimonial Actions ---
   const addTestimonial = async (newTestimonial) => {
     const tWithId = {
@@ -561,6 +590,7 @@ export function ContentProvider({ children }) {
         updateAlbum,
         togglePublishAlbum,
         reorderAlbums,
+        shuffleAlbums,
         addTestimonial,
         removeTestimonial,
         updateTestimonial,
