@@ -1,6 +1,6 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Shuffle, Sparkles } from 'lucide-react'
+import { Shuffle, Play, Pause, Sparkles } from 'lucide-react'
 import { useContent } from '../context/ContentContext'
 import { fadeUp, staggerContainer } from '../lib/motion'
 
@@ -9,12 +9,22 @@ export default function FeaturedWork({ onOpenProject }) {
   const allAlbums = content?.albums || []
 
   // Only display published albums on public site
-  const albums = allAlbums.filter((a) => a.is_published !== false)
+  const baseAlbums = allAlbums.filter((a) => a.is_published !== false)
 
   const [selectedCategory, setSelectedCategory] = useState('All')
   const [showAll, setShowAll] = useState(false)
   const [isMobilePaused, setIsMobilePaused] = useState(false)
   const [isShuffling, setIsShuffling] = useState(false)
+  const [autoShuffle, setAutoShuffle] = useState(true)
+  const [isSectionHovered, setIsSectionHovered] = useState(false)
+
+  // Local randomized presentation array for super smooth client-side auto-shuffle
+  const [shuffledAlbums, setShuffledAlbums] = useState(baseAlbums)
+
+  // Sync with baseAlbums changes
+  useEffect(() => {
+    setShuffledAlbums(baseAlbums)
+  }, [baseAlbums.length])
 
   const categories = [
     'All',
@@ -26,10 +36,13 @@ export default function FeaturedWork({ onOpenProject }) {
     'Architecture Photography',
   ]
 
+  // Filter based on selected category
   const filteredAlbums =
     selectedCategory === 'All'
-      ? albums
-      : albums.filter((a) => a.category?.toLowerCase().includes(selectedCategory.toLowerCase().slice(0, 8)))
+      ? shuffledAlbums
+      : shuffledAlbums.filter((a) =>
+          a.category?.toLowerCase().includes(selectedCategory.toLowerCase().slice(0, 8))
+        )
 
   // Duplicated array for seamless infinite mobile marquee loop
   const infiniteMobileAlbums = [
@@ -40,18 +53,54 @@ export default function FeaturedWork({ onOpenProject }) {
   // Desktop: Show first 6 albums initially, or all albums when "View More" is clicked
   const displayedItems = showAll ? filteredAlbums : filteredAlbums.slice(0, 6)
 
-  const handleShuffle = () => {
+  // Manual Shuffle Trigger
+  const handleManualShuffle = () => {
     setIsShuffling(true)
+    // Perform smooth local rotation/randomization
+    const shuffled = [...shuffledAlbums]
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    setShuffledAlbums(shuffled)
     if (shuffleAlbums) {
       shuffleAlbums()
     }
-    setTimeout(() => setIsShuffling(false), 600)
+    setTimeout(() => setIsShuffling(false), 500)
   }
 
+  // Auto-Shuffle Timer: Runs every 6 seconds when enabled and not hovered
+  useEffect(() => {
+    if (!autoShuffle || isSectionHovered || filteredAlbums.length <= 1) return
+
+    const timer = setInterval(() => {
+      setShuffledAlbums((prev) => {
+        if (prev.length <= 1) return prev
+        // Rotate by moving a random item to front or gentle random swap
+        const next = [...prev]
+        const idxA = Math.floor(Math.random() * next.length)
+        const idxB = Math.floor(Math.random() * next.length)
+        if (idxA !== idxB) {
+          const temp = next[idxA]
+          next[idxA] = next[idxB]
+          next[idxB] = temp
+        }
+        return next
+      })
+    }, 5500)
+
+    return () => clearInterval(timer)
+  }, [autoShuffle, isSectionHovered, filteredAlbums.length])
+
   return (
-    <section id="work" className="py-16 sm:py-24 md:py-32 bg-white relative border-t border-charcoal/5 overflow-hidden select-none">
+    <section
+      id="work"
+      onMouseEnter={() => setIsSectionHovered(true)}
+      onMouseLeave={() => setIsSectionHovered(false)}
+      className="py-16 sm:py-24 md:py-32 bg-white relative border-t border-charcoal/5 overflow-hidden select-none"
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Centered ALBUMS Heading + Luxury Shuffle Button */}
+        {/* Centered ALBUMS Heading + Auto-Shuffle Controls */}
         <motion.div
           variants={fadeUp}
           initial="hidden"
@@ -63,13 +112,14 @@ export default function FeaturedWork({ onOpenProject }) {
             ALBUMS
           </h2>
 
-          {/* Luxury Shuffle Control */}
-          <div className="inline-flex items-center gap-2">
+          {/* Luxury Shuffle & Auto-Shuffle Status Toolbar */}
+          <div className="flex items-center justify-center gap-2 sm:gap-3 flex-wrap">
+            {/* Manual Shuffle Button */}
             <button
               type="button"
-              onClick={handleShuffle}
+              onClick={handleManualShuffle}
               className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-charcoal/15 bg-[#FAF8F5] hover:bg-charcoal hover:text-white text-charcoal text-xs font-sans font-bold tracking-widest uppercase transition-all duration-300 shadow-sm group active:scale-95"
-              title="Shuffle albums order"
+              title="Shuffle albums order now"
             >
               <motion.div
                 animate={isShuffling ? { rotate: 360 } : { rotate: 0 }}
@@ -77,7 +127,36 @@ export default function FeaturedWork({ onOpenProject }) {
               >
                 <Shuffle className="w-3.5 h-3.5 text-copper group-hover:text-copper-light transition-colors" />
               </motion.div>
-              <span>Shuffle Collection</span>
+              <span>Shuffle</span>
+            </button>
+
+            {/* Auto-Shuffle Toggle Button */}
+            <button
+              type="button"
+              onClick={() => setAutoShuffle(!autoShuffle)}
+              className={`inline-flex items-center gap-2 px-4 py-2 rounded-full border text-xs font-sans font-bold tracking-wider uppercase transition-all duration-300 shadow-sm ${
+                autoShuffle
+                  ? 'bg-emerald-50 border-emerald-300 text-emerald-800 hover:bg-emerald-100'
+                  : 'bg-[#FAF8F5] border-charcoal/15 text-charcoal/60 hover:bg-charcoal/5'
+              }`}
+              title={autoShuffle ? 'Click to pause auto-shuffle' : 'Click to enable auto-shuffle'}
+            >
+              {autoShuffle ? (
+                <>
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-600" />
+                  </span>
+                  <span>Auto-Shuffle: ON</span>
+                  <Pause className="w-3 h-3 text-emerald-700 ml-0.5" />
+                </>
+              ) : (
+                <>
+                  <span className="w-2 h-2 rounded-full bg-charcoal/30" />
+                  <span>Auto-Shuffle: OFF</span>
+                  <Play className="w-3 h-3 text-charcoal/60 ml-0.5" />
+                </>
+              )}
             </button>
           </div>
         </motion.div>
@@ -185,7 +264,7 @@ export default function FeaturedWork({ onOpenProject }) {
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.95 }}
-                    transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+                    transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
                     onClick={() => onOpenProject && onOpenProject(item)}
                     className="group relative cursor-pointer overflow-hidden bg-charcoal aspect-[4/5] shadow-sm rounded-sm"
                   >
