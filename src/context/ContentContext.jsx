@@ -13,7 +13,7 @@ import {
   TABLE_PHOTOS,
 } from '../lib/supabaseClient'
 
-const STORAGE_KEY = 'tilnogz_content_store_v9'
+const STORAGE_KEY = 'tilnogz_content_store_v10'
 const AUTH_KEY = 'tilnogz_admin_auth'
 const DEFAULT_PASSCODE = 'tilnogz2026'
 
@@ -45,7 +45,7 @@ const defaultTestimonials = [
     id: 't-3',
     clientName: 'Pasindu Dananjaya',
     service: 'Vehicle & Sports Action Session',
-    location: 'Colombo, Sri Lanka',
+    location: 'Galle, Sri Lanka',
     image: '/photos/pasindu-dananjaya.jpg',
     review:
       'A huge shoutout to Tilnogz Photography for capturing my bike and action shots with such precision and energy! All his clicks speak out his talent, passion, and dedication he puts into the work. We’re also grateful for his friendly and supportive service and for the faster outputs. All the very best to rank higher and higher in the industry! 🔥🏍️',
