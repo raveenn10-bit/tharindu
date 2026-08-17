@@ -16,6 +16,24 @@ export default function VideoSection() {
       description:
         'Atmospheric romance, natural light storytelling, and decisive emotional moments captured in motion by Tilnogz Photography.',
     },
+    {
+      id: 'vid-2',
+      title: 'Grand Wedding & Couple Highlights',
+      category: 'Wedding Cinematography',
+      video_url: '/videos/tilnogz-cinematic-02.mp4',
+      is_published: true,
+      description:
+        'Joyful cultural celebrations, intimate promises, and grand wedding highlights in vibrant motion.',
+    },
+    {
+      id: 'vid-3',
+      title: 'Atmospheric Motion Monograph',
+      category: 'Lifestyle & Editorial Film',
+      video_url: '/videos/tilnogz-cinematic-03.mp4',
+      is_published: true,
+      description:
+        'Sensory editorial film capturing subtle glances and cinematic movement in natural light.',
+    },
   ]
 
   const publishedVideos = rawVideos.filter((v) => v.is_published !== false)

@@ -13,7 +13,7 @@ import {
   TABLE_PHOTOS,
 } from '../lib/supabaseClient'
 
-const STORAGE_KEY = 'tilnogz_content_store_v8'
+const STORAGE_KEY = 'tilnogz_content_store_v9'
 const AUTH_KEY = 'tilnogz_admin_auth'
 const DEFAULT_PASSCODE = 'tilnogz2026'
 
@@ -83,6 +83,24 @@ const initialContentState = {
       is_published: true,
       description:
         'Atmospheric romance, natural light storytelling, and decisive emotional moments captured in motion by Tilnogz Photography.',
+    },
+    {
+      id: 'vid-2',
+      title: 'Grand Wedding & Couple Highlights',
+      category: 'Wedding Cinematography',
+      video_url: '/videos/tilnogz-cinematic-02.mp4',
+      is_published: true,
+      description:
+        'Joyful cultural celebrations, intimate promises, and grand wedding highlights in vibrant motion.',
+    },
+    {
+      id: 'vid-3',
+      title: 'Atmospheric Motion Monograph',
+      category: 'Lifestyle & Editorial Film',
+      video_url: '/videos/tilnogz-cinematic-03.mp4',
+      is_published: true,
+      description:
+        'Sensory editorial film capturing subtle glances and cinematic movement in natural light.',
     },
   ],
   testimonials: defaultTestimonials,
