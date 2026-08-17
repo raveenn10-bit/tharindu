@@ -132,6 +132,23 @@ export const featured = [
   item('f-surf', nature.surf, 'Southern Coastal Swell', 'Sports Photography', {
     note: 'Heavy surf breaking white over coastal rocks along the southern Sri Lankan coastline.',
   }),
+
+  // --- Maheshika Portrait Series ---
+  item('mah-01', '/photos/maheshika/maheshika-01.jpg', 'Botanical Bloom Portrait I', 'Pre-Wedding / Engagement Photography', {
+    note: 'Close-up portrait with fresh florals and warm sunlight, capturing authentic radiance.',
+  }),
+  item('mah-02', '/photos/maheshika/maheshika-02.jpg', 'Floral Serenity Portrait II', 'Pre-Wedding / Engagement Photography', {
+    note: 'Delicate floral framing in lush tropical nature.',
+  }),
+  item('mah-03', '/photos/maheshika/maheshika-03.jpg', 'Forest Walkway Monograph', 'Pre-Wedding / Engagement Photography', {
+    note: 'Full-length portrait under an atmospheric forest canopy pathway.',
+  }),
+  item('mah-04', '/photos/maheshika/maheshika-04.jpg', 'Nature Canopy Reflections', 'Pre-Wedding / Engagement Photography', {
+    note: 'Environmental portrait among sculptural tree branches with monochromatic depth.',
+  }),
+  item('mah-05', '/photos/maheshika/maheshika-05.jpg', 'Golden Hour Meadow Bouquet', 'Pre-Wedding / Engagement Photography', {
+    note: 'Joyful floral gesture against soft woodland bokeh.',
+  }),
 ]
 
 export const portfolio = {

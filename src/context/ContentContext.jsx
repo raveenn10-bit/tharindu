@@ -13,16 +13,16 @@ import {
   TABLE_PHOTOS,
 } from '../lib/supabaseClient'
 
-const STORAGE_KEY = 'tilnogz_content_store_v4'
+const STORAGE_KEY = 'tilnogz_content_store_v5'
 const AUTH_KEY = 'tilnogz_admin_auth'
 const DEFAULT_PASSCODE = 'tilnogz2026'
 
-// 3 curated client testimonials
+// 3 curated client testimonials (Female only: Imalka Sandeepani, Maheshika, Anju)
 const defaultTestimonials = [
   {
     id: 't-1',
     clientName: 'Imalka Sandeepani',
-    service: 'Special Event & Portrait Session',
+    service: 'Special Event & Pre-Wedding Session',
     location: 'Galle, Sri Lanka',
     image: '/photos/editorial/ed-01.jpg',
     review:
@@ -32,23 +32,23 @@ const defaultTestimonials = [
   },
   {
     id: 't-2',
-    clientName: 'Anju',
-    service: 'Sports & Action Coverage',
+    clientName: 'Maheshika',
+    service: 'Outdoor Portrait & Floral Session',
     location: 'Colombo, Sri Lanka',
-    image: '/photos/field/fd-04.jpg',
+    image: '/photos/maheshika/maheshika-01.jpg',
     review:
-      'A huge thank goes to Tilnogz Photography for doing our pre-wedding shoot in the best way a client can think of 💖 All his clicks speak out his talent, passion, and dedication he puts into the work. We’re also grateful for his friendly and supportive service and for the faster outputs. All the very best to rank higher and higher in the industry! 😊',
+      'Thank you so much Tilnogz Photography for capturing these beautiful portraits! The colors, natural lighting, and peaceful mood with the flowers came out even better than I imagined. You made me feel so comfortable during the shoot, and your talent is truly exceptional! Highly recommend to anyone! 🌸✨',
     is_published: true,
     sort_order: 2,
   },
   {
     id: 't-3',
-    clientName: 'Rowena',
-    service: 'Architecture & Event Monograph',
-    location: 'Galle, Sri Lanka',
-    image: '/photos/editorial/ed-04.jpg',
+    clientName: 'Anju',
+    service: 'Pre-Wedding & Couple Coverage',
+    location: 'Colombo, Sri Lanka',
+    image: '/photos/field/fd-04.jpg',
     review:
-      'I just wanted to thank you for the beautiful wedding photos you’ve taken. You captured the most special moments, and we were glad to get so many great images. All our friends and family members appreciated every picture. Working with you was a very positive experience. You took a perfect photo that looks very natural. We are very grateful for your work and will definitely turn to you in the future. 😍 ❤️',
+      'A huge thank goes to Tilnogz Photography for doing our pre-wedding shoot in the best way a client can think of 💖 All his clicks speak out his talent, passion, and dedication he puts into the work. We’re also grateful for his friendly and supportive service and for the faster outputs. All the very best to rank higher and higher in the industry! 😊',
     is_published: true,
     sort_order: 3,
   },
