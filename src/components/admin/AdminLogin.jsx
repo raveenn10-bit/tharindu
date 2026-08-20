@@ -5,7 +5,7 @@ import { useContent } from '../../context/ContentContext'
 
 export default function AdminLogin({ isOpen, onClose, onSuccess }) {
   const { login } = useContent()
-  const [loginMode, setLoginMode] = useState('email') // 'email' or 'passcode'
+  const [loginMode, setLoginMode] = useState('passcode') // default to 'passcode' for instant access
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [passcode, setPasscode] = useState('')
@@ -22,9 +22,9 @@ export default function AdminLogin({ isOpen, onClose, onSuccess }) {
     try {
       let res
       if (loginMode === 'email') {
-        res = await login(email, password)
+        res = await login(email.trim(), password.trim())
       } else {
-        res = await login(passcode)
+        res = await login(passcode.trim())
       }
 
       if (res && res.success) {

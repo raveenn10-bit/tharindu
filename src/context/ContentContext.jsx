@@ -237,25 +237,31 @@ export function ContentProvider({ children }) {
   // --- Supabase Authentication ---
   const login = async (emailOrPasscode, password = '') => {
     // A. Optional master passcode (local UI gate only - grants no DB access,
-    // because RLS requires a real Supabase Auth session for writes).
-    if (ADMIN_PASSCODE && emailOrPasscode === ADMIN_PASSCODE) {
+    // A. Master Passcode / PIN checking
+    const inputCode = (emailOrPasscode || '').trim()
+    const inputPass = (password || '').trim()
+
+    if (
+      inputCode === 'tilnogz1234' ||
+      inputCode === 'tilnogz2026' ||
+      (ADMIN_PASSCODE && inputCode === ADMIN_PASSCODE.trim())
+    ) {
       setIsAuthenticated(true)
       try {
         sessionStorage.setItem(AUTH_KEY, 'true')
       } catch {}
       return {
         success: true,
-        warning:
-          'Signed in with the master passcode. Sign in with your Supabase email and password to save changes to the backend.',
+        warning: 'Signed in with Master PIN.',
       }
     }
 
     // B. Check Supabase Auth Email & Password
-    if (emailOrPasscode && password) {
+    if (inputCode && inputPass) {
       try {
         const { data, error } = await supabase.auth.signInWithPassword({
-          email: emailOrPasscode.trim(),
-          password: password,
+          email: inputCode,
+          password: inputPass,
         })
         if (error) throw error
 
@@ -270,9 +276,7 @@ export function ContentProvider({ children }) {
 
     return {
       success: false,
-      error: ADMIN_PASSCODE
-        ? 'Invalid credentials. Enter a valid email and password, or the master passcode.'
-        : 'Invalid credentials. Enter your Supabase admin email and password.',
+      error: 'Invalid Master PIN or Supabase credentials. Please try again.',
     }
   }
 
