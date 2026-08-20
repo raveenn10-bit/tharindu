@@ -181,6 +181,27 @@ const initialContentState = {
   plans: defaultPlans,
 }
 
+function sanitizeContent(raw) {
+  if (!raw || typeof raw !== 'object') return initialContentState
+  return {
+    hero: {
+      desktopImage: raw?.hero?.desktopImage || initialContentState.hero.desktopImage,
+      mobileImage: raw?.hero?.mobileImage || initialContentState.hero.mobileImage,
+    },
+    about: {
+      portraitImage: raw?.about?.portraitImage || initialContentState.about.portraitImage,
+      name: raw?.about?.name || initialContentState.about.name,
+      address: raw?.about?.address || initialContentState.about.address,
+      bio1: raw?.about?.bio1 || initialContentState.about.bio1,
+      bio2: raw?.about?.bio2 || initialContentState.about.bio2,
+    },
+    albums: Array.isArray(raw?.albums) && raw.albums.length > 0 ? raw.albums : initialContentState.albums,
+    videos: Array.isArray(raw?.videos) && raw.videos.length > 0 ? raw.videos : initialContentState.videos,
+    testimonials: Array.isArray(raw?.testimonials) && raw.testimonials.length > 0 ? raw.testimonials : initialContentState.testimonials,
+    plans: Array.isArray(raw?.plans) && raw.plans.length > 0 ? raw.plans : defaultPlans,
+  }
+}
+
 const ContentContext = createContext(null)
 
 export function ContentProvider({ children }) {
@@ -188,7 +209,7 @@ export function ContentProvider({ children }) {
     try {
       const saved = localStorage.getItem(STORAGE_KEY)
       if (saved) {
-        return JSON.parse(saved)
+        return sanitizeContent(JSON.parse(saved))
       }
     } catch (err) {
       console.error('Failed to load local content:', err)
@@ -244,10 +265,10 @@ export function ContentProvider({ children }) {
     }
 
     try {
-      // A. Load global site settings (Hero, About, Videos, Testimonials) if stored in Supabase
+      // A. Load global site settings (Hero, About, Videos, Testimonials, Plans) if stored in Supabase
       const { content: remoteContent } = await fetchSiteSettings()
       if (remoteContent) {
-        setContent((prev) => ({
+        setContent((prev) => sanitizeContent({
           ...prev,
           ...remoteContent,
         }))

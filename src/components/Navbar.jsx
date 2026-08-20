@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Menu, X, ArrowUpRight, MessageSquare, Facebook } from 'lucide-react'
+import { Menu, X, ArrowUpRight, MessageSquare, Facebook, Youtube } from 'lucide-react'
 import { contact, navLinks, getWhatsAppLink } from '../data/content'
 import { useScrolled } from '../lib/hooks'
 import MagneticButton from './MagneticButton'

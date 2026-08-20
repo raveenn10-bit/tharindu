@@ -70,8 +70,8 @@ const fallbackPlans = [
 
 export default function PricingPlans() {
   const { content } = useContent()
-  const rawPlans = content?.plans && content.plans.length > 0 ? content.plans : fallbackPlans
-  const plans = rawPlans.filter((p) => p.is_published !== false)
+  const rawPlans = Array.isArray(content?.plans) && content.plans.length > 0 ? content.plans : fallbackPlans
+  const plans = rawPlans.filter((p) => p && typeof p === 'object' && p.is_published !== false)
 
   const [activeMobileIndex, setActiveMobileIndex] = useState(1) // Default to popular plan on mobile
   const scrollContainerRef = useRef(null)
@@ -167,7 +167,7 @@ export default function PricingPlans() {
 
                     {/* Features List */}
                     <ul className="space-y-2.5 mb-6">
-                      {plan.features.map((feature, idx) => (
+                      {(Array.isArray(plan?.features) ? plan.features : []).map((feature, idx) => (
                         <li key={idx} className="flex items-start gap-2 text-xs font-sans">
                           <div className={`w-3.5 h-3.5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${
                             isPopular ? 'bg-copper text-white' : 'bg-sand text-charcoal'
@@ -280,7 +280,7 @@ export default function PricingPlans() {
 
                     {/* Features List */}
                     <ul className="space-y-3.5 mb-10">
-                      {plan.features.map((feature, idx) => (
+                      {(Array.isArray(plan?.features) ? plan.features : []).map((feature, idx) => (
                         <li key={idx} className="flex items-start gap-3 text-[13px] font-sans">
                           <div className={`w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${
                             isPopular ? 'bg-copper text-white' : 'bg-sand text-charcoal'
