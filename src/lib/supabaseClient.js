@@ -128,44 +128,50 @@ export async function deletePhotoFromStorage(imageUrlOrPath, bucket = BUCKET_NAM
 export const deleteMediaFromSupabase = deletePhotoFromStorage
 
 /**
- * 3. Database: Fetch published albums for the public site
+ * 3. Database: Fetch published photos for the public site
  */
 export async function fetchPublishedPhotos() {
   try {
     const { data, error } = await supabase
-      .from(TABLE_ALBUMS)
+      .from('photos')
       .select('*')
       .eq('is_published', true)
       .order('sort_order', { ascending: true })
 
-    if (error) throw error
+    if (error) {
+      console.error('Supabase Error:', error)
+      return { photos: [], error: error.message }
+    }
     return { photos: data || [], error: null }
   } catch (err) {
-    console.warn('Supabase fetch published albums notice:', err.message)
+    console.error('Supabase Error:', err.message)
     return { photos: [], error: err.message }
   }
 }
 
 /**
- * 4. Database: Fetch all albums for the Admin Dashboard
+ * 4. Database: Fetch all photos for the Admin Dashboard
  */
 export async function fetchAllPhotosAdmin() {
   try {
     const { data, error } = await supabase
-      .from(TABLE_ALBUMS)
+      .from('photos')
       .select('*')
       .order('sort_order', { ascending: true })
 
-    if (error) throw error
+    if (error) {
+      console.error('Supabase Error:', error)
+      return { photos: [], error: error.message }
+    }
     return { photos: data || [], error: null }
   } catch (err) {
-    console.error('Supabase fetch admin albums error:', err.message)
+    console.error('Supabase Error:', err.message)
     return { photos: [], error: err.message }
   }
 }
 
 /**
- * 5. Database: Insert a new album record
+ * 5. Database: Insert a new photo record into 'photos' table
  */
 export async function insertPhotoRecord({
   title,
@@ -176,41 +182,47 @@ export async function insertPhotoRecord({
 }) {
   try {
     const { data, error } = await supabase
-      .from(TABLE_ALBUMS)
+      .from('photos')
       .insert([{ title, category, image_url, sort_order, is_published }])
       .select()
       .single()
 
-    if (error) throw error
+    if (error) {
+      console.error('Supabase Error:', error)
+      return { data: null, error: error.message }
+    }
     return { data, error: null }
   } catch (err) {
-    console.error('Supabase insert album error:', err.message)
+    console.error('Supabase Error:', err.message)
     return { data: null, error: err.message }
   }
 }
 
 /**
- * 6. Database: Update an existing album record
+ * 6. Database: Update an existing photo record in 'photos' table
  */
 export async function updatePhotoRecord(id, updates) {
   try {
     const { data, error } = await supabase
-      .from(TABLE_ALBUMS)
+      .from('photos')
       .update(updates)
       .eq('id', id)
       .select()
       .single()
 
-    if (error) throw error
+    if (error) {
+      console.error('Supabase Error:', error)
+      return { data: null, error: error.message }
+    }
     return { data, error: null }
   } catch (err) {
-    console.error('Supabase update album error:', err.message)
+    console.error('Supabase Error:', err.message)
     return { data: null, error: err.message }
   }
 }
 
 /**
- * 7. Database: Delete album record and remove its media from the bucket
+ * 7. Database: Delete photo record and remove its media from the bucket
  */
 export async function deletePhotoRecord(id, imageUrl) {
   try {
@@ -218,12 +230,15 @@ export async function deletePhotoRecord(id, imageUrl) {
       await deletePhotoFromStorage(imageUrl)
     }
 
-    const { error } = await supabase.from(TABLE_ALBUMS).delete().eq('id', id)
+    const { error } = await supabase.from('photos').delete().eq('id', id)
 
-    if (error) throw error
+    if (error) {
+      console.error('Supabase Error:', error)
+      return { success: false, error: error.message }
+    }
     return { success: true, error: null }
   } catch (err) {
-    console.error('Supabase delete album error:', err.message)
+    console.error('Supabase Error:', err.message)
     return { success: false, error: err.message }
   }
 }
