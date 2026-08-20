@@ -59,6 +59,23 @@ const defaultTestimonials = [
   },
 ]
 
+/**
+ * Turn a Supabase auth failure into something the person reading it can act on.
+ * Browsers word network failures differently ("Failed to fetch" in Chrome,
+ * "Load failed" in Safari), and neither says anything useful on its own.
+ */
+function describeAuthError(err) {
+  const raw = err?.message || 'Login failed.'
+  const isNetworkFailure =
+    err instanceof TypeError ||
+    /failed to fetch|load failed|networkerror|network request failed/i.test(raw)
+
+  if (isNetworkFailure) {
+    return `Could not reach the Supabase backend (${raw}). Check that the project is running and that this site was deployed with the correct VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.`
+  }
+  return raw
+}
+
 const initialContentState = {
   hero: {
     desktopImage: '/photos/hero.png',
@@ -254,6 +271,17 @@ export function ContentProvider({ children }) {
 
     // B. Check Supabase Auth Email & Password
     if (emailOrPasscode && password) {
+      // Fail with something actionable rather than letting the request go out
+      // to the placeholder host and surface a bare "Failed to fetch".
+      if (!isSupabaseConfigured()) {
+        return {
+          success: false,
+          // Kept short: the login screen already shows a persistent banner
+          // spelling out which variables are missing and what to do.
+          error: 'Email sign-in is unavailable until the backend is configured.',
+        }
+      }
+
       try {
         const { data, error } = await supabase.auth.signInWithPassword({
           email: emailOrPasscode.trim(),
@@ -266,7 +294,7 @@ export function ContentProvider({ children }) {
         sessionStorage.setItem(AUTH_KEY, 'true')
         return { success: true, user: data.user }
       } catch (err) {
-        return { success: false, error: err.message }
+        return { success: false, error: describeAuthError(err) }
       }
     }
 
@@ -548,6 +576,7 @@ export function ContentProvider({ children }) {
         // Writes need a real Supabase Auth session: RLS rejects anon writes.
         canWriteToBackend: Boolean(session),
         isPasscodeEnabled: Boolean(ADMIN_PASSCODE),
+        isBackendConfigured: isSupabaseConfigured(),
         isAuthenticated,
         login,
         logout,

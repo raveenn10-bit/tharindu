@@ -4,7 +4,7 @@ import { Lock, Mail, KeyRound, ArrowRight, X, AlertCircle, Loader2 } from 'lucid
 import { useContent } from '../../context/ContentContext'
 
 export default function AdminLogin({ isOpen, onClose, onSuccess }) {
-  const { login } = useContent()
+  const { login, isBackendConfigured, isPasscodeEnabled } = useContent()
   const [loginMode, setLoginMode] = useState('email') // 'email' or 'passcode'
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -102,9 +102,22 @@ export default function AdminLogin({ isOpen, onClose, onSuccess }) {
 
         {/* Form Body */}
         <form onSubmit={handleSubmit} className="p-6 sm:p-8 space-y-4">
+          {!isBackendConfigured && (
+            <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-start gap-2 text-xs text-amber-900 font-sans">
+              <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+              <span>
+                This site was built without Supabase credentials, so email sign-in
+                cannot work. Set <strong>VITE_SUPABASE_URL</strong> and{' '}
+                <strong>VITE_SUPABASE_ANON_KEY</strong> in your hosting environment,
+                then redeploy.
+                {isPasscodeEnabled && ' The Master PIN still opens the panel read-only.'}
+              </span>
+            </div>
+          )}
+
           {error && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 text-xs text-red-700 font-sans">
-              <AlertCircle className="w-4 h-4 flex-shrink-0" />
+            <div className="p-3 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2 text-xs text-red-700 font-sans">
+              <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
               <span>{error}</span>
             </div>
           )}
