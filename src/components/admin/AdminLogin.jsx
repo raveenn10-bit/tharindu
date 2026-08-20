@@ -12,8 +12,6 @@ export default function AdminLogin({ isOpen, onClose, onSuccess }) {
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
 
-  if (!isOpen) return null
-
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
@@ -41,6 +39,8 @@ export default function AdminLogin({ isOpen, onClose, onSuccess }) {
       setIsLoading(false)
     }
   }
+
+  if (!isOpen) return null
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-charcoal/80 backdrop-blur-md">

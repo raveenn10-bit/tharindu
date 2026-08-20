@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   X,
@@ -149,7 +149,24 @@ export default function AdminDashboard({ isOpen, onClose }) {
     review: '',
   })
 
-  if (!isOpen) return null
+  // Sync heroForm and aboutForm whenever content is loaded/updated
+  useEffect(() => {
+    if (content?.hero) {
+      setHeroForm({
+        desktop: content.hero.desktopImage || '/photos/hero.png',
+        mobile: content.hero.mobileImage || '/photos/hero-mobile.png',
+      })
+    }
+    if (content?.about) {
+      setAboutForm({
+        name: content.about.name || 'Tharindu Lakshan',
+        address: content.about.address || 'Colombo 7, Sri Lanka',
+        bio1: content.about.bio1 || '',
+        bio2: content.about.bio2 || '',
+        portraitImage: content.about.portraitImage || '/photos/tharindu-portrait.png',
+      })
+    }
+  }, [content])
 
   const showToast = (msg) => {
     setToastMessage(msg)
@@ -255,25 +272,6 @@ export default function AdminDashboard({ isOpen, onClose }) {
     showToast('Testimonial updated!')
   }
 
-  // Sync heroForm and aboutForm whenever content is loaded/updated
-  React.useEffect(() => {
-    if (content?.hero) {
-      setHeroForm({
-        desktop: content.hero.desktopImage || '/photos/hero.png',
-        mobile: content.hero.mobileImage || '/photos/hero-mobile.png',
-      })
-    }
-    if (content?.about) {
-      setAboutForm({
-        name: content.about.name || 'Tharindu Lakshan',
-        address: content.about.address || 'Colombo 7, Sri Lanka',
-        bio1: content.about.bio1 || '',
-        bio2: content.about.bio2 || '',
-        portraitImage: content.about.portraitImage || '/photos/tharindu-portrait.png',
-      })
-    }
-  }, [content])
-
   // --- Handlers for Hero & About ---
   const handleSaveHero = async (e) => {
     e.preventDefault()
@@ -314,6 +312,8 @@ export default function AdminDashboard({ isOpen, onClose }) {
       setIsSavingAll(false)
     }
   }
+
+  if (!isOpen) return null
 
   return (
     <div className="fixed inset-0 z-[120] flex items-center justify-center p-0 md:p-6 bg-charcoal/85 backdrop-blur-lg select-none">
