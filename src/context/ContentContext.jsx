@@ -532,6 +532,12 @@ export function ContentProvider({ children }) {
         setContent(parsed)
         return { success: true }
       }
+      return { success: false, error: 'Invalid configuration format' }
+    } catch (e) {
+      return { success: false, error: e.message }
+    }
+  }
+
   const saveAllChanges = async () => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(content))

@@ -57,15 +57,22 @@ function seoFiles(siteUrl) {
   }
 }
 
+function htmlEnvPlugin(siteUrl) {
+  return {
+    name: 'html-env-plugin',
+    transformIndexHtml(html) {
+      return html.replace(/%VITE_SITE_URL%/g, siteUrl)
+    },
+  }
+}
+
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
-  // Canonical origin, no trailing slash. Set VITE_SITE_URL in .env (and in your
-  // host's environment settings) so canonical, Open Graph, JSON-LD, robots.txt
-  // and sitemap.xml all point at the real domain.
   const siteUrl = (env.VITE_SITE_URL || DEFAULT_SITE_URL).replace(/\/+$/, '')
+  process.env.VITE_SITE_URL = siteUrl
 
   return {
-    plugins: [react(), seoFiles(siteUrl)],
+    plugins: [react(), htmlEnvPlugin(siteUrl), seoFiles(siteUrl)],
     // Makes %VITE_SITE_URL% resolve inside index.html
     define: {},
     server: {
