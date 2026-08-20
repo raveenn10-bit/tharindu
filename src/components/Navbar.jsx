@@ -85,6 +85,15 @@ export default function Navbar() {
                 <Facebook className="w-4 h-4 fill-current" />
               </a>
               <a
+                href={contact.youtubeUrl || 'https://www.youtube.com/@Tilnogz'}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-8 h-8 rounded-full flex items-center justify-center text-charcoal hover:text-copper hover:bg-white/70 transition-colors"
+                aria-label="Tilnogz Photography YouTube"
+              >
+                <Youtube className="w-4 h-4 fill-current" />
+              </a>
+              <a
                 href={getWhatsAppLink()}
                 target="_blank"
                 rel="noopener noreferrer"
@@ -178,17 +187,27 @@ export default function Navbar() {
                 </a>
               </div>
 
-              <div className="flex items-center justify-between pt-2">
-                <a
-                  href={contact.facebookUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="font-sans text-xs font-semibold tracking-wider text-charcoal/80 hover:text-copper uppercase underline underline-offset-4"
-                >
-                  Facebook Page →
-                </a>
+              <div className="flex items-center justify-between pt-2 border-t border-charcoal/10">
+                <div className="flex items-center gap-4">
+                  <a
+                    href={contact.facebookUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-sans text-xs font-semibold tracking-wider text-charcoal/80 hover:text-copper uppercase underline underline-offset-4"
+                  >
+                    Facebook →
+                  </a>
+                  <a
+                    href={contact.youtubeUrl || 'https://www.youtube.com/@Tilnogz'}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-sans text-xs font-semibold tracking-wider text-charcoal/80 hover:text-copper uppercase underline underline-offset-4"
+                  >
+                    YouTube →
+                  </a>
+                </div>
                 <span className="text-xs text-charcoal-muted font-sans">
-                  Galle / Sri Lanka
+                  Colombo / Sri Lanka
                 </span>
               </div>
             </div>

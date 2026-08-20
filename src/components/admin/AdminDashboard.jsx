@@ -34,6 +34,9 @@ import {
   Save,
   Check,
   Loader2,
+  Package,
+  CreditCard,
+  Tag,
 } from 'lucide-react'
 import { useContent } from '../../context/ContentContext'
 import ImageUploader from './ImageUploader'
@@ -87,6 +90,11 @@ export default function AdminDashboard({ isOpen, onClose }) {
     removeTestimonial,
     updateTestimonial,
     togglePublishTestimonial,
+    addPlan,
+    removePlan,
+    updatePlan,
+    togglePublishPlan,
+    reorderPlans,
     saveAllChanges,
     resetToDefaults,
     exportConfig,
@@ -95,7 +103,7 @@ export default function AdminDashboard({ isOpen, onClose }) {
 
   const backend = BACKEND_STATUS[supabaseStatus] || BACKEND_STATUS.checking
 
-  const [activeTab, setActiveTab] = useState('albums') // 'albums' | 'videos' | 'hero' | 'about' | 'testimonials'
+  const [activeTab, setActiveTab] = useState('albums') // 'albums' | 'videos' | 'plans' | 'hero' | 'about' | 'testimonials'
   const [toastMessage, setToastMessage] = useState('')
   const [isSavingAll, setIsSavingAll] = useState(false)
 
@@ -108,6 +116,19 @@ export default function AdminDashboard({ isOpen, onClose }) {
 
   const [isAddingTestimonial, setIsAddingTestimonial] = useState(false)
   const [editingTestimonial, setEditingTestimonial] = useState(null)
+
+  const [isAddingPlan, setIsAddingPlan] = useState(false)
+  const [editingPlan, setEditingPlan] = useState(null)
+  const [newPlan, setNewPlan] = useState({
+    name: '',
+    subtitle: '',
+    badge: 'CUSTOM PACKAGE',
+    price: '',
+    isPopular: false,
+    description: '',
+    featuresText: 'Up to 3 Hours Coverage\n50+ Master Retouched Photos\nHigh-Res Digital Gallery\nFull Social Usage Rights',
+    inquiryMessage: '',
+  })
 
   // Local Hero Form State
   const [heroForm, setHeroForm] = useState({
@@ -278,6 +299,86 @@ export default function AdminDashboard({ isOpen, onClose }) {
     updateTestimonial(editingTestimonial.id, editingTestimonial)
     setEditingTestimonial(null)
     showToast('Testimonial updated!')
+  }
+
+  // --- Handlers for Plans & Packages ---
+  const handleCreatePlan = (e) => {
+    e.preventDefault()
+    if (!newPlan.name) {
+      alert('Please provide a package name.')
+      return
+    }
+    const features = (newPlan.featuresText || '')
+      .split('\n')
+      .map((s) => s.trim())
+      .filter(Boolean)
+
+    if (addPlan) {
+      addPlan({
+        ...newPlan,
+        features: features.length > 0 ? features : ['On-Location Photography Coverage', 'Master Color-Graded Photos'],
+        inquiryMessage:
+          newPlan.inquiryMessage ||
+          `Hello Tilnogz Photography, I would like to inquire about the ${newPlan.name} package.`,
+      })
+    }
+    setNewPlan({
+      name: '',
+      subtitle: '',
+      badge: 'CUSTOM PACKAGE',
+      price: '',
+      isPopular: false,
+      description: '',
+      featuresText: 'Up to 3 Hours Coverage\n50+ Master Retouched Photos\nHigh-Res Digital Gallery\nFull Social Usage Rights',
+      inquiryMessage: '',
+    })
+    setIsAddingPlan(false)
+    showToast('New photography plan created!')
+  }
+
+  const handleSaveEditedPlan = (e) => {
+    e.preventDefault()
+    if (!editingPlan) return
+    const features = typeof editingPlan.featuresText === 'string'
+      ? editingPlan.featuresText.split('\n').map((s) => s.trim()).filter(Boolean)
+      : editingPlan.features
+
+    if (updatePlan) {
+      updatePlan(editingPlan.id, {
+        ...editingPlan,
+        features: features && features.length > 0 ? features : editingPlan.features,
+      })
+    }
+    setEditingPlan(null)
+    showToast('Plan package details updated!')
+  }
+
+  const handleTogglePublishPlan = (id) => {
+    if (togglePublishPlan) {
+      togglePublishPlan(id)
+      showToast('Plan visibility updated!')
+    }
+  }
+
+  const handleDeletePlan = (id, name) => {
+    if (confirm(`Are you sure you want to delete the plan "${name}"?`)) {
+      if (removePlan) {
+        removePlan(id)
+        showToast('Plan package removed.')
+      }
+    }
+  }
+
+  const handleMovePlan = (index, direction) => {
+    const currentPlans = [...(content?.plans || [])]
+    const targetIndex = index + direction
+    if (targetIndex < 0 || targetIndex >= currentPlans.length) return
+    const [moved] = currentPlans.splice(index, 1)
+    currentPlans.splice(targetIndex, 0, moved)
+    if (reorderPlans) {
+      reorderPlans(currentPlans)
+      showToast('Plan order updated!')
+    }
   }
 
   // --- Handlers for Hero & About ---
@@ -521,6 +622,30 @@ export default function AdminDashboard({ isOpen, onClose }) {
                 }`}
               >
                 {publishedVideosCount} active
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab('plans')}
+              className={`px-4 py-3 rounded-xl text-xs font-sans font-bold uppercase tracking-wider flex items-center justify-between transition-all ${
+                activeTab === 'plans'
+                  ? 'bg-charcoal text-white shadow-md'
+                  : 'text-charcoal hover:bg-sand/40 hover:text-copper'
+              }`}
+            >
+              <div className="flex items-center gap-2.5">
+                <Package className="w-4 h-4" />
+                <span>Plans ({(content?.plans || []).length})</span>
+              </div>
+              <span
+                className={`text-[10px] px-2 py-0.5 rounded-full ${
+                  activeTab === 'plans'
+                    ? 'bg-white/20 text-white'
+                    : 'bg-charcoal/10 text-charcoal'
+                }`}
+              >
+                {(content?.plans || []).filter((p) => p.is_published !== false).length} active
               </span>
             </button>
 
@@ -1576,6 +1701,446 @@ export default function AdminDashboard({ isOpen, onClose }) {
                 </div>
               </div>
             )}
+
+            {/* ======================================================== */}
+            {/* TAB: PLANS & PACKAGES                                   */}
+            {/* ======================================================== */}
+            {activeTab === 'plans' && (
+              <div className="space-y-4 sm:space-y-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-charcoal/10">
+                  <div>
+                    <h3 className="font-serif text-lg sm:text-2xl font-bold text-charcoal uppercase flex items-center gap-2">
+                      <Package className="w-5 h-5 text-copper" />
+                      <span>Photography Plans & Investment</span>
+                    </h3>
+                    <p className="text-[11px] sm:text-xs text-charcoal-muted font-sans">
+                      Customize packages, pricing tags, features, badges, and WhatsApp booking prompts shown on the website.
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setIsAddingPlan(true)}
+                    className="px-4 py-2 bg-copper hover:bg-copper-dark text-white rounded-xl text-[11px] sm:text-xs font-sans font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 shadow-md transition-colors"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>Add New Package</span>
+                  </button>
+                </div>
+
+                {/* Add Plan Modal */}
+                {isAddingPlan && (
+                  <div className="fixed inset-0 z-[150] bg-charcoal/80 flex items-end sm:items-center justify-center p-0 sm:p-4">
+                    <form
+                      onSubmit={handleCreatePlan}
+                      className="bg-white rounded-t-3xl sm:rounded-2xl max-w-xl w-full max-h-[90dvh] overflow-y-auto p-5 sm:p-6 shadow-2xl border border-charcoal/15 space-y-4"
+                    >
+                      <div className="flex items-center justify-between pb-2 border-b border-charcoal/10">
+                        <h4 className="font-serif text-base font-bold text-charcoal uppercase flex items-center gap-2">
+                          <Plus className="w-4 h-4 text-copper" />
+                          <span>Create New Package</span>
+                        </h4>
+                        <button
+                          type="button"
+                          onClick={() => setIsAddingPlan(false)}
+                          className="p-1 text-charcoal/40 hover:text-charcoal"
+                        >
+                          <X className="w-5 h-5" />
+                        </button>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-xs font-sans font-bold text-charcoal uppercase mb-1">
+                            Package Name *
+                          </label>
+                          <input
+                            type="text"
+                            required
+                            value={newPlan.name}
+                            onChange={(e) => setNewPlan({ ...newPlan, name: e.target.value })}
+                            placeholder="e.g. ESSENTIAL / GRADUATION"
+                            className="w-full px-3 py-2 bg-[#FAF8F5] border border-charcoal/20 rounded-lg text-xs font-sans focus:outline-none focus:border-copper uppercase"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-sans font-bold text-charcoal uppercase mb-1">
+                            Badge / Ribbon Text
+                          </label>
+                          <input
+                            type="text"
+                            value={newPlan.badge}
+                            onChange={(e) => setNewPlan({ ...newPlan, badge: e.target.value })}
+                            placeholder="e.g. MOST POPULAR / FOCUSED"
+                            className="w-full px-3 py-2 bg-[#FAF8F5] border border-charcoal/20 rounded-lg text-xs font-sans focus:outline-none focus:border-copper uppercase"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-xs font-sans font-bold text-charcoal uppercase mb-1">
+                            Subtitle / Target Audience
+                          </label>
+                          <input
+                            type="text"
+                            value={newPlan.subtitle}
+                            onChange={(e) => setNewPlan({ ...newPlan, subtitle: e.target.value })}
+                            placeholder="e.g. Portraits & Individual Sessions"
+                            className="w-full px-3 py-2 bg-[#FAF8F5] border border-charcoal/20 rounded-lg text-xs font-sans focus:outline-none focus:border-copper"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-sans font-bold text-charcoal uppercase mb-1">
+                            Price / Investment Tag (Optional)
+                          </label>
+                          <input
+                            type="text"
+                            value={newPlan.price}
+                            onChange={(e) => setNewPlan({ ...newPlan, price: e.target.value })}
+                            placeholder="e.g. LKR 45,000 or Quote on Request"
+                            className="w-full px-3 py-2 bg-[#FAF8F5] border border-charcoal/20 rounded-lg text-xs font-sans focus:outline-none focus:border-copper"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 p-3 bg-sand/30 rounded-xl border border-charcoal/10">
+                        <input
+                          type="checkbox"
+                          id="isPopularNew"
+                          checked={newPlan.isPopular}
+                          onChange={(e) => setNewPlan({ ...newPlan, isPopular: e.target.checked })}
+                          className="w-4 h-4 text-copper rounded focus:ring-copper"
+                        />
+                        <label htmlFor="isPopularNew" className="text-xs font-sans font-semibold text-charcoal cursor-pointer">
+                          Highlight as "Most Popular / Featured" (Dark luxury theme card)
+                        </label>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-sans font-bold text-charcoal uppercase mb-1">
+                          Brief Description
+                        </label>
+                        <textarea
+                          rows={2}
+                          value={newPlan.description}
+                          onChange={(e) => setNewPlan({ ...newPlan, description: e.target.value })}
+                          placeholder="Short summary of who this package is for..."
+                          className="w-full px-3 py-2 bg-[#FAF8F5] border border-charcoal/20 rounded-lg text-xs font-sans focus:outline-none focus:border-copper resize-none"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-sans font-bold text-charcoal uppercase mb-1">
+                          Included Features (One feature per line)
+                        </label>
+                        <textarea
+                          rows={4}
+                          value={newPlan.featuresText}
+                          onChange={(e) => setNewPlan({ ...newPlan, featuresText: e.target.value })}
+                          placeholder="Up to 2 Hours On-Location Coverage&#10;25+ Color-Graded Photos&#10;Private Cloud Gallery&#10;5-Day Turnaround"
+                          className="w-full px-3 py-2 bg-[#FAF8F5] border border-charcoal/20 rounded-lg text-xs font-sans focus:outline-none focus:border-copper resize-none font-mono"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-sans font-bold text-charcoal uppercase mb-1">
+                          Custom WhatsApp Inquiry Message
+                        </label>
+                        <input
+                          type="text"
+                          value={newPlan.inquiryMessage}
+                          onChange={(e) => setNewPlan({ ...newPlan, inquiryMessage: e.target.value })}
+                          placeholder="Hello Tilnogz Photography, I would like to inquire about..."
+                          className="w-full px-3 py-2 bg-[#FAF8F5] border border-charcoal/20 rounded-lg text-xs font-sans focus:outline-none focus:border-copper"
+                        />
+                      </div>
+
+                      <div className="flex gap-2 pt-2">
+                        <button
+                          type="submit"
+                          className="flex-1 py-3 bg-charcoal hover:bg-copper text-white text-xs font-sans font-bold uppercase rounded-xl transition-colors shadow"
+                        >
+                          Create Package
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setIsAddingPlan(false)}
+                          className="px-4 py-3 bg-charcoal/10 text-charcoal text-xs font-sans font-bold uppercase rounded-xl"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                )}
+
+                {/* Edit Plan Modal */}
+                {editingPlan && (
+                  <div className="fixed inset-0 z-[150] bg-charcoal/80 flex items-end sm:items-center justify-center p-0 sm:p-4">
+                    <form
+                      onSubmit={handleSaveEditedPlan}
+                      className="bg-white rounded-t-3xl sm:rounded-2xl max-w-xl w-full max-h-[90dvh] overflow-y-auto p-5 sm:p-6 shadow-2xl border border-charcoal/15 space-y-4"
+                    >
+                      <div className="flex items-center justify-between pb-2 border-b border-charcoal/10">
+                        <h4 className="font-serif text-base font-bold text-charcoal uppercase flex items-center gap-2">
+                          <Edit className="w-4 h-4 text-copper" />
+                          <span>Edit Package: {editingPlan.name}</span>
+                        </h4>
+                        <button
+                          type="button"
+                          onClick={() => setEditingPlan(null)}
+                          className="p-1 text-charcoal/40 hover:text-charcoal"
+                        >
+                          <X className="w-5 h-5" />
+                        </button>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-xs font-sans font-bold text-charcoal uppercase mb-1">
+                            Package Name *
+                          </label>
+                          <input
+                            type="text"
+                            required
+                            value={editingPlan.name || ''}
+                            onChange={(e) => setEditingPlan({ ...editingPlan, name: e.target.value })}
+                            className="w-full px-3 py-2 bg-[#FAF8F5] border border-charcoal/20 rounded-lg text-xs font-sans focus:outline-none focus:border-copper uppercase font-bold"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-sans font-bold text-charcoal uppercase mb-1">
+                            Badge / Ribbon Text
+                          </label>
+                          <input
+                            type="text"
+                            value={editingPlan.badge || ''}
+                            onChange={(e) => setEditingPlan({ ...editingPlan, badge: e.target.value })}
+                            placeholder="e.g. MOST POPULAR"
+                            className="w-full px-3 py-2 bg-[#FAF8F5] border border-charcoal/20 rounded-lg text-xs font-sans focus:outline-none focus:border-copper uppercase"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-xs font-sans font-bold text-charcoal uppercase mb-1">
+                            Subtitle / Description Line
+                          </label>
+                          <input
+                            type="text"
+                            value={editingPlan.subtitle || ''}
+                            onChange={(e) => setEditingPlan({ ...editingPlan, subtitle: e.target.value })}
+                            className="w-full px-3 py-2 bg-[#FAF8F5] border border-charcoal/20 rounded-lg text-xs font-sans focus:outline-none focus:border-copper"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-sans font-bold text-charcoal uppercase mb-1">
+                            Price / Investment Tag (Optional)
+                          </label>
+                          <input
+                            type="text"
+                            value={editingPlan.price || ''}
+                            onChange={(e) => setEditingPlan({ ...editingPlan, price: e.target.value })}
+                            placeholder="e.g. LKR 45,000"
+                            className="w-full px-3 py-2 bg-[#FAF8F5] border border-charcoal/20 rounded-lg text-xs font-sans focus:outline-none focus:border-copper"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 p-3 bg-sand/30 rounded-xl border border-charcoal/10">
+                        <input
+                          type="checkbox"
+                          id="isPopularEdit"
+                          checked={Boolean(editingPlan.isPopular)}
+                          onChange={(e) => setEditingPlan({ ...editingPlan, isPopular: e.target.checked })}
+                          className="w-4 h-4 text-copper rounded focus:ring-copper"
+                        />
+                        <label htmlFor="isPopularEdit" className="text-xs font-sans font-semibold text-charcoal cursor-pointer">
+                          Highlight as "Most Popular / Featured" (Dark luxury theme card)
+                        </label>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-sans font-bold text-charcoal uppercase mb-1">
+                          Description
+                        </label>
+                        <textarea
+                          rows={2}
+                          value={editingPlan.description || ''}
+                          onChange={(e) => setEditingPlan({ ...editingPlan, description: e.target.value })}
+                          className="w-full px-3 py-2 bg-[#FAF8F5] border border-charcoal/20 rounded-lg text-xs font-sans focus:outline-none focus:border-copper resize-none"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-sans font-bold text-charcoal uppercase mb-1">
+                          Included Features (One per line)
+                        </label>
+                        <textarea
+                          rows={5}
+                          value={
+                            typeof editingPlan.featuresText === 'string'
+                              ? editingPlan.featuresText
+                              : Array.isArray(editingPlan.features)
+                              ? editingPlan.features.join('\n')
+                              : ''
+                          }
+                          onChange={(e) => setEditingPlan({ ...editingPlan, featuresText: e.target.value })}
+                          placeholder="Feature 1&#10;Feature 2&#10;Feature 3"
+                          className="w-full px-3 py-2 bg-[#FAF8F5] border border-charcoal/20 rounded-lg text-xs font-sans focus:outline-none focus:border-copper resize-none font-mono"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-sans font-bold text-charcoal uppercase mb-1">
+                          WhatsApp Booking Prompt Message
+                        </label>
+                        <input
+                          type="text"
+                          value={editingPlan.inquiryMessage || ''}
+                          onChange={(e) => setEditingPlan({ ...editingPlan, inquiryMessage: e.target.value })}
+                          className="w-full px-3 py-2 bg-[#FAF8F5] border border-charcoal/20 rounded-lg text-xs font-sans focus:outline-none focus:border-copper"
+                        />
+                      </div>
+
+                      <div className="flex gap-2 pt-2">
+                        <button
+                          type="submit"
+                          className="flex-1 py-3 bg-copper hover:bg-copper-dark text-white text-xs font-sans font-bold uppercase rounded-xl transition-colors shadow"
+                        >
+                          Save Package Details
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setEditingPlan(null)}
+                          className="px-4 py-3 bg-charcoal/10 text-charcoal text-xs font-sans font-bold uppercase rounded-xl"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                )}
+
+                {/* Plans List Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {(content?.plans || []).map((plan, index) => {
+                    const isPublished = plan.is_published !== false
+                    return (
+                      <div
+                        key={plan.id || index}
+                        className={`p-5 rounded-2xl border transition-all flex flex-col justify-between ${
+                          plan.isPopular
+                            ? 'bg-charcoal text-white border-copper shadow-lg'
+                            : 'bg-[#FAF8F5] text-charcoal border-charcoal/15 shadow-sm'
+                        } ${!isPublished ? 'opacity-60 grayscale-[40%]' : ''}`}
+                      >
+                        <div>
+                          <div className="flex items-start justify-between gap-2 mb-2">
+                            <span
+                              className={`text-[10px] font-sans font-bold tracking-wider uppercase px-2.5 py-0.5 rounded-full ${
+                                plan.isPopular
+                                  ? 'bg-copper text-white'
+                                  : 'bg-charcoal/10 text-copper'
+                              }`}
+                            >
+                              {plan.badge || 'PACKAGE'}
+                            </span>
+
+                            <div className="flex items-center gap-1">
+                              <button
+                                type="button"
+                                onClick={() => handleMovePlan(index, -1)}
+                                disabled={index === 0}
+                                className="p-1 rounded bg-black/10 hover:bg-black/20 disabled:opacity-30"
+                                title="Move Left / Up"
+                              >
+                                <ArrowUp className="w-3 h-3" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleMovePlan(index, 1)}
+                                disabled={index === (content?.plans || []).length - 1}
+                                className="p-1 rounded bg-black/10 hover:bg-black/20 disabled:opacity-30"
+                                title="Move Right / Down"
+                              >
+                                <ArrowDown className="w-3 h-3" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleTogglePublishPlan(plan.id)}
+                                className={`p-1 rounded ${
+                                  isPublished ? 'text-emerald-500 hover:bg-emerald-500/10' : 'text-amber-500 hover:bg-amber-500/10'
+                                }`}
+                                title={isPublished ? 'Active on site' : 'Hidden from site'}
+                              >
+                                {isPublished ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setEditingPlan({
+                                    ...plan,
+                                    featuresText: Array.isArray(plan.features) ? plan.features.join('\n') : '',
+                                  })
+                                }
+                                className="p-1 rounded text-copper hover:bg-copper/10"
+                                title="Edit Package"
+                              >
+                                <Edit className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDeletePlan(plan.id, plan.name)}
+                                className="p-1 rounded text-red-500 hover:bg-red-500/10"
+                                title="Delete Package"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </div>
+
+                          <h4 className="font-sans font-extrabold text-lg uppercase tracking-tight">
+                            {plan.name}
+                          </h4>
+                          <p className={`text-xs font-sans ${plan.isPopular ? 'text-white/70' : 'text-charcoal-muted'}`}>
+                            {plan.subtitle}
+                          </p>
+                          {plan.price && (
+                            <p className="text-sm font-bold text-copper mt-1">
+                              {plan.price}
+                            </p>
+                          )}
+
+                          <p className={`text-xs font-body mt-2 leading-relaxed ${plan.isPopular ? 'text-white/80' : 'text-charcoal/80'}`}>
+                            {plan.description}
+                          </p>
+
+                          <div className="w-full h-[1px] my-3 bg-black/10" />
+
+                          <ul className="space-y-1.5 text-xs font-sans">
+                            {(plan.features || []).map((feat, fIdx) => (
+                              <li key={fIdx} className="flex items-start gap-2">
+                                <Check className="w-3 h-3 text-copper flex-shrink-0 mt-0.5" />
+                                <span className={plan.isPopular ? 'text-white/90' : 'text-charcoal/90'}>
+                                  {feat}
+                                </span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
           </main>
         </div>
 
@@ -1597,12 +2162,23 @@ export default function AdminDashboard({ isOpen, onClose }) {
           <button
             type="button"
             onClick={() => setActiveTab('videos')}
-            className={`flex flex-col items-center gap-1 py-1 px-3 rounded-xl transition-all ${
+            className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl transition-all ${
               activeTab === 'videos' ? 'text-copper font-bold' : 'text-charcoal/60'
             }`}
           >
             <Film className="w-4 h-4" />
             <span className="text-[10px] uppercase font-sans">Videos</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('plans')}
+            className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl transition-all ${
+              activeTab === 'plans' ? 'text-copper font-bold' : 'text-charcoal/60'
+            }`}
+          >
+            <Package className="w-4 h-4" />
+            <span className="text-[10px] uppercase font-sans">Plans</span>
           </button>
 
           <button

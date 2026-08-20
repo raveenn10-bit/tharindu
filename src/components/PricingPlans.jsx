@@ -2,14 +2,16 @@ import React, { useState, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { Check, ArrowUpRight, Sparkles, ChevronRight } from 'lucide-react'
 import { getWhatsAppLink } from '../data/content'
+import { useContent } from '../context/ContentContext'
 import { fadeUp, staggerContainer } from '../lib/motion'
 
-const plans = [
+const fallbackPlans = [
   {
-    id: 'essential',
+    id: 'plan-essential',
     name: 'ESSENTIAL',
     subtitle: 'Portraits & Individual Sessions',
     badge: 'FOCUSED SESSION',
+    price: '',
     isPopular: false,
     description:
       'Tailored for personal branding, athlete portraits, single architectural sites, or lifestyle shoots.',
@@ -25,10 +27,11 @@ const plans = [
       'Hello Tilnogz Photography, I would like to inquire about the ESSENTIAL photography plan.',
   },
   {
-    id: 'signature',
+    id: 'plan-signature',
     name: 'SIGNATURE',
     subtitle: 'Sports Tournaments & Events',
     badge: 'MOST POPULAR',
+    price: '',
     isPopular: true,
     description:
       'Our most requested coverage for sports fixtures, architectural portfolios, and luxury event storytelling.',
@@ -44,10 +47,11 @@ const plans = [
       'Hello Tilnogz Photography, I would like to inquire about the SIGNATURE photography plan.',
   },
   {
-    id: 'bespoke',
+    id: 'plan-bespoke',
     name: 'BESPOKE',
     subtitle: 'Full-Day Commercial & Multi-Location',
     badge: 'COMPREHENSIVE SUITE',
+    price: '',
     isPopular: false,
     description:
       'Complete creative commission for multi-day sporting events, architectural monographs, or commercial features.',
@@ -65,6 +69,10 @@ const plans = [
 ]
 
 export default function PricingPlans() {
+  const { content } = useContent()
+  const rawPlans = content?.plans && content.plans.length > 0 ? content.plans : fallbackPlans
+  const plans = rawPlans.filter((p) => p.is_published !== false)
+
   const [activeMobileIndex, setActiveMobileIndex] = useState(1) // Default to popular plan on mobile
   const scrollContainerRef = useRef(null)
 
@@ -144,6 +152,11 @@ export default function PricingPlans() {
                       <p className={`text-[11px] font-sans mt-0.5 ${isPopular ? 'text-paper/70' : 'text-charcoal-muted'}`}>
                         {plan.subtitle}
                       </p>
+                      {plan.price && (
+                        <div className="text-xs sm:text-sm font-sans font-bold text-copper mt-1 tracking-wide">
+                          {plan.price}
+                        </div>
+                      )}
                     </div>
 
                     <p className={`font-body text-xs leading-relaxed mb-5 ${isPopular ? 'text-paper/85' : 'text-charcoal/80'}`}>
@@ -252,6 +265,11 @@ export default function PricingPlans() {
                       <p className={`text-xs font-sans mt-1 ${isPopular ? 'text-paper/70' : 'text-charcoal-muted'}`}>
                         {plan.subtitle}
                       </p>
+                      {plan.price && (
+                        <div className="text-sm sm:text-base font-sans font-bold text-copper mt-1.5 tracking-wide">
+                          {plan.price}
+                        </div>
+                      )}
                     </div>
 
                     <p className={`font-body text-sm leading-relaxed mb-8 ${isPopular ? 'text-paper/85' : 'text-charcoal/80'}`}>

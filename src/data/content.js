@@ -37,7 +37,8 @@ export const contact = {
   phoneDisplay: '+94 78 843 2741',
   phoneTel: 'tel:+94788432741',
   whatsappUrl: 'https://wa.me/94788432741',
-  facebookUrl: 'https://web.facebook.com/Tilnogzphoto',
+  facebookUrl: 'https://web.facebook.com/Tilnogzphoto/?_rdc=1&_rdr#',
+  youtubeUrl: 'https://www.youtube.com/@Tilnogz',
   address: 'Colombo 7, Sri Lanka',
   defaultMessage: 'Hello Tilnogz Photography, I would like to inquire about a photography / videography session.',
 }

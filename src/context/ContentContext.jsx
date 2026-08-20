@@ -59,6 +59,75 @@ const defaultTestimonials = [
   },
 ]
 
+const defaultPlans = [
+  {
+    id: 'plan-essential',
+    name: 'ESSENTIAL',
+    subtitle: 'Portraits & Individual Sessions',
+    badge: 'FOCUSED SESSION',
+    price: '',
+    isPopular: false,
+    description:
+      'Tailored for personal branding, athlete portraits, single architectural sites, or lifestyle shoots.',
+    features: [
+      'Up to 2 Hours On-Location Coverage',
+      '25+ Master Color-Graded Deliverables',
+      'Pre-Shoot Creative Consultation',
+      'High-Resolution Digital Web Gallery',
+      '5-Day Standard Turnaround',
+      'Personal & Social Usage Rights',
+    ],
+    inquiryMessage:
+      'Hello Tilnogz Photography, I would like to inquire about the ESSENTIAL photography plan.',
+    is_published: true,
+    sort_order: 1,
+  },
+  {
+    id: 'plan-signature',
+    name: 'SIGNATURE',
+    subtitle: 'Sports Tournaments & Events',
+    badge: 'MOST POPULAR',
+    price: '',
+    isPopular: true,
+    description:
+      'Our most requested coverage for sports fixtures, architectural portfolios, and luxury event storytelling.',
+    features: [
+      'Up to 5 Hours Extended On-Location Coverage',
+      '75+ Master Processed & Retouched Deliverables',
+      'Multi-Angle High-Velocity Action Captures',
+      '48-Hour Priority Highlight Teaser Set',
+      'Full Commercial & Editorial Rights',
+      'Private High-Speed Cloud Delivery',
+    ],
+    inquiryMessage:
+      'Hello Tilnogz Photography, I would like to inquire about the SIGNATURE photography plan.',
+    is_published: true,
+    sort_order: 2,
+  },
+  {
+    id: 'plan-bespoke',
+    name: 'BESPOKE',
+    subtitle: 'Full-Day Commercial & Multi-Location',
+    badge: 'COMPREHENSIVE SUITE',
+    price: '',
+    isPopular: false,
+    description:
+      'Complete creative commission for multi-day sporting events, architectural monographs, or commercial features.',
+    features: [
+      'Full-Day Multi-Location Dedicated Coverage',
+      '150+ Master Color-Graded Deliverables',
+      'Dedicated Creative Direction & Lighting Setup',
+      '24-Hour Express Teaser Deliverables',
+      'Complete High-Res Processed Archive',
+      'Full Commercial, Print & Social Licensing',
+    ],
+    inquiryMessage:
+      'Hello Tilnogz Photography, I would like to inquire about the BESPOKE photography plan.',
+    is_published: true,
+    sort_order: 3,
+  },
+]
+
 const initialContentState = {
   hero: {
     desktopImage: '/photos/hero.png',
@@ -109,6 +178,7 @@ const initialContentState = {
     },
   ],
   testimonials: defaultTestimonials,
+  plans: defaultPlans,
 }
 
 const ContentContext = createContext(null)
@@ -528,6 +598,57 @@ export function ContentProvider({ children }) {
     }
   }
 
+  // --- Plan & Package Actions ---
+  const addPlan = (newPlan) => {
+    const pWithId = {
+      id: newPlan.id || `plan-${Date.now()}`,
+      name: newPlan.name || 'NEW PACKAGE',
+      subtitle: newPlan.subtitle || 'Custom Photography Package',
+      badge: newPlan.badge || 'CUSTOM',
+      price: newPlan.price || '',
+      isPopular: Boolean(newPlan.isPopular),
+      description: newPlan.description || '',
+      features: Array.isArray(newPlan.features) ? newPlan.features : [],
+      inquiryMessage:
+        newPlan.inquiryMessage ||
+        `Hello Tilnogz Photography, I would like to inquire about the ${newPlan.name} package.`,
+      is_published: true,
+      sort_order: ((content.plans || []).length) + 1,
+    }
+    setContent((prev) => ({
+      ...prev,
+      plans: [...(prev.plans || []), pWithId],
+    }))
+  }
+
+  const removePlan = (id) => {
+    setContent((prev) => ({
+      ...prev,
+      plans: (prev.plans || []).filter((p) => p.id !== id),
+    }))
+  }
+
+  const updatePlan = (id, updates) => {
+    setContent((prev) => ({
+      ...prev,
+      plans: (prev.plans || []).map((p) => (p.id === id ? { ...p, ...updates } : p)),
+    }))
+  }
+
+  const togglePublishPlan = (id) => {
+    const target = (content.plans || []).find((p) => p.id === id)
+    if (target) {
+      updatePlan(id, { is_published: !target.is_published })
+    }
+  }
+
+  const reorderPlans = (reorderedPlans) => {
+    setContent((prev) => ({
+      ...prev,
+      plans: reorderedPlans.map((p, idx) => ({ ...p, sort_order: idx + 1 })),
+    }))
+  }
+
   // --- Backup & Reset Actions ---
   const resetToDefaults = () => {
     setContent(initialContentState)
@@ -568,6 +689,7 @@ export function ContentProvider({ children }) {
         ...(extraPayload.albums ? { albums: extraPayload.albums } : {}),
         ...(extraPayload.videos ? { videos: extraPayload.videos } : {}),
         ...(extraPayload.testimonials ? { testimonials: extraPayload.testimonials } : {}),
+        ...(extraPayload.plans ? { plans: extraPayload.plans } : {}),
       }
 
       setContent(merged)
@@ -577,7 +699,7 @@ export function ContentProvider({ children }) {
         console.error('LocalStorage write error:', e)
       }
 
-      // 1. Save full site settings (Hero, About, Videos, Testimonials) to Supabase
+      // 1. Save full site settings (Hero, About, Videos, Testimonials, Plans) to Supabase
       await saveSiteSettings(merged)
 
       // 2. Also ensure backend photos table is updated if configured
@@ -641,6 +763,11 @@ export function ContentProvider({ children }) {
         removeTestimonial,
         updateTestimonial,
         togglePublishTestimonial,
+        addPlan,
+        removePlan,
+        updatePlan,
+        togglePublishPlan,
+        reorderPlans,
         saveAllChanges,
         resetToDefaults,
         exportConfig,
