@@ -255,28 +255,55 @@ export default function AdminDashboard({ isOpen, onClose }) {
     showToast('Testimonial updated!')
   }
 
+  // Sync heroForm and aboutForm whenever content is loaded/updated
+  React.useEffect(() => {
+    if (content?.hero) {
+      setHeroForm({
+        desktop: content.hero.desktopImage || '/photos/hero.png',
+        mobile: content.hero.mobileImage || '/photos/hero-mobile.png',
+      })
+    }
+    if (content?.about) {
+      setAboutForm({
+        name: content.about.name || 'Tharindu Lakshan',
+        address: content.about.address || 'Colombo 7, Sri Lanka',
+        bio1: content.about.bio1 || '',
+        bio2: content.about.bio2 || '',
+        portraitImage: content.about.portraitImage || '/photos/tharindu-portrait.png',
+      })
+    }
+  }, [content])
+
   // --- Handlers for Hero & About ---
-  const handleSaveHero = (e) => {
+  const handleSaveHero = async (e) => {
     e.preventDefault()
     updateHeroImages(heroForm)
-    showToast('Hero images updated successfully!')
+    if (saveAllChanges) {
+      await saveAllChanges({ hero: heroForm })
+    }
+    showToast('Hero background images updated & published!')
   }
 
-  const handleSaveAbout = (e) => {
+  const handleSaveAbout = async (e) => {
     e.preventDefault()
     updateAbout(aboutForm)
-    showToast('About section updated successfully!')
+    if (saveAllChanges) {
+      await saveAllChanges({ about: aboutForm })
+    }
+    showToast('About section updated & published!')
   }
 
   const handleSaveAll = async () => {
     setIsSavingAll(true)
     try {
+      updateHeroImages(heroForm)
+      updateAbout(aboutForm)
       if (saveAllChanges) {
-        const res = await saveAllChanges()
+        const res = await saveAllChanges({ hero: heroForm, about: aboutForm })
         if (res?.success) {
-          showToast('All changes saved & published live!')
+          showToast('All changes saved & updated on live site!')
         } else {
-          showToast('Saved locally. Backend synced.')
+          showToast('Saved to browser. Backend updated.')
         }
       } else {
         showToast('All changes saved successfully!')

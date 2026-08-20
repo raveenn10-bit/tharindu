@@ -293,24 +293,40 @@ export function ContentProvider({ children }) {
 
   // --- Hero Actions ---
   const updateHeroImages = ({ desktop, mobile }) => {
-    setContent((prev) => ({
-      ...prev,
-      hero: {
-        desktopImage: desktop !== undefined ? desktop : prev.hero.desktopImage,
-        mobileImage: mobile !== undefined ? mobile : prev.hero.mobileImage,
-      },
-    }))
+    setContent((prev) => {
+      const updated = {
+        ...prev,
+        hero: {
+          desktopImage: desktop !== undefined ? desktop : prev.hero?.desktopImage || '/photos/hero.png',
+          mobileImage: mobile !== undefined ? mobile : prev.hero?.mobileImage || '/photos/hero-mobile.png',
+        },
+      }
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(updated))
+      } catch (e) {
+        console.error('LocalStorage save error:', e)
+      }
+      return updated
+    })
   }
 
   // --- About Actions ---
   const updateAbout = (updates) => {
-    setContent((prev) => ({
-      ...prev,
-      about: {
-        ...prev.about,
-        ...updates,
-      },
-    }))
+    setContent((prev) => {
+      const updated = {
+        ...prev,
+        about: {
+          ...(prev.about || {}),
+          ...updates,
+        },
+      }
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(updated))
+      } catch (e) {
+        console.error('LocalStorage save error:', e)
+      }
+      return updated
+    })
   }
 
   // --- Photo & Album Actions (Supabase `albums` table & `tilnogz-media` bucket) ---
@@ -538,19 +554,45 @@ export function ContentProvider({ children }) {
     }
   }
 
-  const saveAllChanges = async () => {
+  const saveAllChanges = async (extraPayload = {}) => {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(content))
+      const merged = {
+        ...content,
+        ...(extraPayload.hero ? { hero: { ...(content.hero || {}), ...extraPayload.hero } } : {}),
+        ...(extraPayload.about ? { about: { ...(content.about || {}), ...extraPayload.about } } : {}),
+        ...(extraPayload.albums ? { albums: extraPayload.albums } : {}),
+        ...(extraPayload.videos ? { videos: extraPayload.videos } : {}),
+        ...(extraPayload.testimonials ? { testimonials: extraPayload.testimonials } : {}),
+      }
+
+      setContent(merged)
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(merged))
+      } catch (e) {
+        console.error('LocalStorage write error:', e)
+      }
+
       // Also ensure backend albums/photos table is updated if configured
-      if (Array.isArray(content.albums)) {
-        for (const item of content.albums) {
-          if (item.id && !String(item.id).startsWith('temp-')) {
+      if (Array.isArray(merged.albums)) {
+        for (const item of merged.albums) {
+          if (item.id && typeof item.id === 'number') {
             await updatePhotoRecord(item.id, {
               title: item.title,
               category: item.category,
               sort_order: item.sort_order || 0,
               is_published: item.is_published !== false,
             })
+          } else if (item.id && String(item.id).startsWith('temp-')) {
+            const { data } = await insertPhotoRecord({
+              title: item.title,
+              category: item.category,
+              image_url: item.image_url || item.image,
+              sort_order: item.sort_order || 0,
+              is_published: item.is_published !== false,
+            })
+            if (data) {
+              item.id = data.id
+            }
           }
         }
       }
