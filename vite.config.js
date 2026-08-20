@@ -39,15 +39,25 @@ function seoFiles(siteUrl) {
   <url>
     <loc>${siteUrl}/</loc>
     <lastmod>${today}</lastmod>
-    <changefreq>weekly</changefreq>
+    <changefreq>daily</changefreq>
     <priority>1.0</priority>
     <image:image>
       <image:loc>${siteUrl}/photos/hero.png</image:loc>
-      <image:title>Tilnogz Photography - Colombo, Sri Lanka</image:title>
+      <image:title>Best Wedding Photographer in Colombo - Tilnogz Photography</image:title>
+      <image:caption>Award-winning wedding and portrait photography by Tharindu Lakshan in Colombo, Sri Lanka.</image:caption>
+      <image:geo_location>Colombo, Sri Lanka</image:geo_location>
     </image:image>
     <image:image>
       <image:loc>${siteUrl}/photos/tharindu-portrait.png</image:loc>
-      <image:title>Tharindu Lakshan, photographer</image:title>
+      <image:title>Tharindu Lakshan - Founder and Photographer at Tilnogz Photography</image:title>
+      <image:caption>Tharindu Lakshan, leading wedding and portrait photographer based in Colombo 7, Sri Lanka.</image:caption>
+      <image:geo_location>Colombo, Sri Lanka</image:geo_location>
+    </image:image>
+    <image:image>
+      <image:loc>${siteUrl}/photos/hero-mobile.png</image:loc>
+      <image:title>Tilnogz Photography Sri Lanka Mobile Hero</image:title>
+      <image:caption>Wedding photography storytelling across Sri Lanka.</image:caption>
+      <image:geo_location>Colombo, Sri Lanka</image:geo_location>
     </image:image>
   </url>
 </urlset>

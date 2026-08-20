@@ -7,6 +7,7 @@ import FeaturedWork from './components/FeaturedWork'
 import VideoSection from './components/VideoSection'
 import Testimonials from './components/Testimonials'
 import PricingPlans from './components/PricingPlans'
+import FAQSection from './components/FAQSection'
 import FullWidthPhotoStrip from './components/FullWidthPhotoStrip'
 import Footer from './components/Footer'
 import CustomCursor from './components/CustomCursor'
@@ -122,7 +123,10 @@ function MainSite() {
         {/* 6. 3 Curated Session Plans & Investment */}
         <PricingPlans />
 
-        {/* 6. Full-Width Edge-to-Edge 7-Image Photo Strip */}
+        {/* 7. SEO-Boosted FAQ Accordion Section */}
+        <FAQSection />
+
+        {/* 8. Full-Width Edge-to-Edge 7-Image Photo Strip */}
         <FullWidthPhotoStrip onOpenProject={handleOpenProject} />
       </main>
 

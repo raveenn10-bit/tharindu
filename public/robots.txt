@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+
+# Admin panel overlay
+Disallow: /#admin
+
+Sitemap: https://www.tilnogzphotography.com.lk/sitemap.xml

@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml">
+  <url>
+    <loc>https://www.tilnogzphotography.com.lk/</loc>
+    <lastmod>2026-08-20</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+
+    <!-- Main Brand & Hero Images -->
+    <image:image>
+      <image:loc>https://www.tilnogzphotography.com.lk/photos/hero.png</image:loc>
+      <image:title>Tilnogz Photography — Best Wedding Photographer in Colombo, Sri Lanka</image:title>
+      <image:caption>Award-winning wedding, pre-wedding and portrait photography by Tharindu Lakshan in Colombo, Sri Lanka.</image:caption>
+      <image:geo_location>Colombo, Sri Lanka</image:geo_location>
+    </image:image>
+
+    <image:image>
+      <image:loc>https://www.tilnogzphotography.com.lk/photos/tharindu-portrait.png</image:loc>
+      <image:title>Tharindu Lakshan — Principal Photographer and Visual Artist</image:title>
+      <image:caption>Tharindu Lakshan, founder of Tilnogz Photography, specializing in luxury wedding storytelling and automotive photography in Colombo 7.</image:caption>
+      <image:geo_location>Colombo, Sri Lanka</image:geo_location>
+    </image:image>
+
+    <image:image>
+      <image:loc>https://www.tilnogzphotography.com.lk/photos/hero-mobile.png</image:loc>
+      <image:title>Tilnogz Photography — Sri Lanka Wedding and Portrait Moments</image:title>
+      <image:caption>Decisive moments and heartfelt wedding photography in Sri Lanka.</image:caption>
+      <image:geo_location>Colombo, Sri Lanka</image:geo_location>
+    </image:image>
+
+    <!-- Editorial & Ceremony Wedding Portfolio Images -->
+    <image:image>
+      <image:loc>https://www.tilnogzphotography.com.lk/photos/editorial/ed-01.jpg</image:loc>
+      <image:title>Luxury Wedding Bridal Portrait in Colombo</image:title>
+      <image:caption>Timeless Sri Lankan wedding bridal portrait captured by Tilnogz Photography.</image:caption>
+      <image:geo_location>Colombo, Sri Lanka</image:geo_location>
+    </image:image>
+
+    <image:image>
+      <image:loc>https://www.tilnogzphotography.com.lk/photos/editorial/ed-02.jpg</image:loc>
+      <image:title>Romantic Sri Lankan Wedding Couple Portrait</image:title>
+      <image:caption>Intimate moments and emotional connections captured on the wedding day.</image:caption>
+      <image:geo_location>Colombo, Sri Lanka</image:geo_location>
+    </image:image>
+
+    <image:image>
+      <image:loc>https://www.tilnogzphotography.com.lk/photos/editorial/ed-03.jpg</image:loc>
+      <image:title>Traditional Sri Lankan Poruwa Wedding Ceremony</image:title>
+      <image:caption>Cultural elegance and heritage wedding rituals documented with artistic light.</image:caption>
+      <image:geo_location>Colombo, Sri Lanka</image:geo_location>
+    </image:image>
+
+    <image:image>
+      <image:loc>https://www.tilnogzphotography.com.lk/photos/editorial/ed-04.jpg</image:loc>
+      <image:title>Destination Wedding Photoshoot in Sri Lanka</image:title>
+      <image:caption>Breathtaking outdoor destination pre-wedding and wedding photography.</image:caption>
+      <image:geo_location>Galle, Sri Lanka</image:geo_location>
+    </image:image>
+
+    <image:image>
+      <image:loc>https://www.tilnogzphotography.com.lk/photos/editorial/ed-05.jpg</image:loc>
+      <image:title>Candid Wedding Reception and Joyful Celebration</image:title>
+      <image:caption>Spontaneous laughter and genuine celebratory moments of the bride and groom.</image:caption>
+      <image:geo_location>Colombo, Sri Lanka</image:geo_location>
+    </image:image>
+
+    <image:image>
+      <image:loc>https://www.tilnogzphotography.com.lk/photos/editorial/ed-06.jpg</image:loc>
+      <image:title>Golden Hour Pre-Wedding Shoot</image:title>
+      <image:caption>Soft golden hour lighting on romantic couples photoshoot in Sri Lanka.</image:caption>
+      <image:geo_location>Bentota, Sri Lanka</image:geo_location>
+    </image:image>
+
+    <!-- Client Showcase Albums -->
+    <image:image>
+      <image:loc>https://www.tilnogzphotography.com.lk/photos/maheshika/maheshika-01.jpg</image:loc>
+      <image:title>Maheshika Wedding Story Album</image:title>
+      <image:caption>Full-day wedding photography coverage and album design by Tharindu Lakshan.</image:caption>
+      <image:geo_location>Colombo, Sri Lanka</image:geo_location>
+    </image:image>
+
+    <image:image>
+      <image:loc>https://www.tilnogzphotography.com.lk/photos/field/fd-01.jpg</image:loc>
+      <image:title>Automotive and Vehicle Rolling Shot Photography</image:title>
+      <image:caption>High-precision automotive action and commercial vehicle photography in Sri Lanka.</image:caption>
+      <image:geo_location>Colombo, Sri Lanka</image:geo_location>
+    </image:image>
+
+    <image:image>
+      <image:loc>https://www.tilnogzphotography.com.lk/photos/pasindu-dananjaya.jpg</image:loc>
+      <image:title>Graduation and Academic Portrait Photography</image:title>
+      <image:caption>Celebrating university milestones and graduation memories in Colombo 7.</image:caption>
+      <image:geo_location>Colombo, Sri Lanka</image:geo_location>
+    </image:image>
+  </url>
+</urlset>
