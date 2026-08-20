@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react'
 import { UploadCloud, Image, Video, Link, X, Check, Loader2 } from 'lucide-react'
-import { uploadPhotoToStorage } from '../../lib/supabaseClient'
+import { uploadPhotoToStorage, BUCKET_NAME } from '../../lib/supabaseClient'
 
 export default function ImageUploader({
   value,
@@ -29,7 +29,7 @@ export default function ImageUploader({
     setIsUploading(true)
     setUploadError('')
 
-    // 1. Upload directly to Supabase Storage Bucket `portfolio-images`
+    // 1. Upload directly to the Supabase Storage bucket
     const { publicUrl, error } = await uploadPhotoToStorage(file)
     if (publicUrl) {
       onChange(publicUrl)
@@ -79,7 +79,7 @@ export default function ImageUploader({
             {label}
           </label>
           <span className="text-[10px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full font-bold">
-            Supabase: portfolio-images
+            Supabase: {BUCKET_NAME}
           </span>
         </div>
       )}

@@ -9,6 +9,15 @@ export default function Hero() {
 
   return (
     <section className="relative min-h-[100dvh] min-h-[100svh] w-full overflow-hidden bg-paper select-none">
+      {/*
+        The hero is a full-bleed photograph with no visible text, but the page
+        still needs exactly one h1 for search engines and screen readers.
+      */}
+      <h1 className="sr-only">
+        Tilnogz Photography — Wedding, Pre-Wedding, Graduation, Vehicle and Sports
+        Photographer in Colombo 7, Sri Lanka
+      </h1>
+
       {/* Full-Bleed Responsive Hero Photograph with Mobile/Portrait Support */}
       <motion.div
         initial={{ opacity: 0, scale: 1.04 }}

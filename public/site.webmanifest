@@ -1,0 +1,12 @@
+{
+  "name": "Tilnogz Photography",
+  "short_name": "Tilnogz",
+  "description": "Wedding, pre-wedding, graduation, vehicle and sports photography in Colombo, Sri Lanka.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FAF8F5",
+  "theme_color": "#FAF8F5",
+  "icons": [
+    { "src": "/logo.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}
