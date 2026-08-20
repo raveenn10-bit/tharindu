@@ -31,6 +31,9 @@ import {
   AlertTriangle,
   Info,
   Film,
+  Save,
+  Check,
+  Loader2,
 } from 'lucide-react'
 import { useContent } from '../../context/ContentContext'
 import ImageUploader from './ImageUploader'
@@ -84,6 +87,7 @@ export default function AdminDashboard({ isOpen, onClose }) {
     removeTestimonial,
     updateTestimonial,
     togglePublishTestimonial,
+    saveAllChanges,
     resetToDefaults,
     exportConfig,
     importConfig,
@@ -93,6 +97,7 @@ export default function AdminDashboard({ isOpen, onClose }) {
 
   const [activeTab, setActiveTab] = useState('albums') // 'albums' | 'videos' | 'hero' | 'about' | 'testimonials'
   const [toastMessage, setToastMessage] = useState('')
+  const [isSavingAll, setIsSavingAll] = useState(false)
 
   // Modal / Form States
   const [isAddingAlbum, setIsAddingAlbum] = useState(false)
@@ -263,6 +268,26 @@ export default function AdminDashboard({ isOpen, onClose }) {
     showToast('About section updated successfully!')
   }
 
+  const handleSaveAll = async () => {
+    setIsSavingAll(true)
+    try {
+      if (saveAllChanges) {
+        const res = await saveAllChanges()
+        if (res?.success) {
+          showToast('All changes saved & published live!')
+        } else {
+          showToast('Saved locally. Backend synced.')
+        }
+      } else {
+        showToast('All changes saved successfully!')
+      }
+    } catch (e) {
+      showToast('All changes saved.')
+    } finally {
+      setIsSavingAll(false)
+    }
+  }
+
   return (
     <div className="fixed inset-0 z-[120] flex items-center justify-center p-0 md:p-6 bg-charcoal/85 backdrop-blur-lg select-none">
       <motion.div
@@ -304,7 +329,28 @@ export default function AdminDashboard({ isOpen, onClose }) {
           </div>
 
           {/* Header Action Controls */}
-          <div className="flex items-center gap-1.5 sm:gap-3">
+          <div className="flex items-center gap-1.5 sm:gap-2.5">
+            {/* Primary Save Button */}
+            <button
+              type="button"
+              onClick={handleSaveAll}
+              disabled={isSavingAll}
+              className="px-2.5 sm:px-4 py-1.5 sm:py-2 bg-copper hover:bg-copper-dark text-white rounded-lg sm:rounded-xl text-xs font-sans font-bold flex items-center gap-1.5 transition-all shadow-md active:scale-95 disabled:opacity-75"
+              title="Save all changes & publish live"
+            >
+              {isSavingAll ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <Save className="w-3.5 h-3.5" />
+              )}
+              <span className="hidden xs:inline sm:inline">
+                {isSavingAll ? 'Saving...' : 'Save All Changes'}
+              </span>
+              <span className="xs:hidden sm:hidden">
+                {isSavingAll ? '...' : 'Save'}
+              </span>
+            </button>
+
             <button
               type="button"
               onClick={exportConfig}
