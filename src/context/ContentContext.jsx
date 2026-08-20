@@ -10,12 +10,17 @@ import {
   updatePhotoRecord,
   deletePhotoRecord,
   togglePhotoPublished,
-  TABLE_PHOTOS,
+  checkBackendHealth,
+  isSupabaseConfigured,
+  TABLE_ALBUMS,
 } from '../lib/supabaseClient'
 
 const STORAGE_KEY = 'tilnogz_content_store_v10'
 const AUTH_KEY = 'tilnogz_admin_auth'
-const DEFAULT_PASSCODE = 'tilnogz2026'
+// Convenience gate only - a client-side passcode is visible in the bundle and
+// is NOT a security boundary. Supabase Auth + RLS is what actually protects the
+// data. Leave VITE_ADMIN_PASSCODE unset to disable passcode login entirely.
+const ADMIN_PASSCODE = import.meta.env.VITE_ADMIN_PASSCODE || ''
 
 // 3 curated client testimonials: Imalka Sandeepani, Maheshika, Pasindu Dananjaya
 const defaultTestimonials = [
@@ -122,7 +127,9 @@ export function ContentProvider({ children }) {
   })
 
   const [isLoading, setIsLoading] = useState(true)
-  const [supabaseStatus, setSupabaseStatus] = useState('connected')
+  // 'checking' | 'connected' | 'unconfigured' | 'error'
+  const [supabaseStatus, setSupabaseStatus] = useState('checking')
+  const [supabaseError, setSupabaseError] = useState('')
   const [session, setSession] = useState(null)
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
     try {
@@ -155,16 +162,33 @@ export function ContentProvider({ children }) {
     return () => subscription.unsubscribe()
   }, [])
 
-  // 2. Fetch Photos from Supabase `photos` table on Mount
+  // 2. Fetch albums from Supabase on mount
   const loadPhotosFromSupabase = useCallback(async () => {
     setIsLoading(true)
+
+    if (!isSupabaseConfigured()) {
+      setSupabaseStatus('unconfigured')
+      setSupabaseError('Supabase URL or anon key is missing from your .env file.')
+      setIsLoading(false)
+      return
+    }
+
     try {
       const { data, error } = await supabase
-        .from(TABLE_PHOTOS)
+        .from(TABLE_ALBUMS)
         .select('*')
         .order('sort_order', { ascending: true })
 
-      if (!error && data && data.length > 0) {
+      // Supabase resolves with an `error` object rather than throwing, so this
+      // branch - not the catch - is what a real backend failure lands in.
+      if (error) {
+        console.error('Supabase albums load failed:', error.message)
+        setSupabaseStatus('error')
+        setSupabaseError(error.message)
+        return
+      }
+
+      if (data && data.length > 0) {
         setContent((prev) => ({
           ...prev,
           albums: data.map((p) => ({
@@ -177,14 +201,26 @@ export function ContentProvider({ children }) {
             created_at: p.created_at,
           })),
         }))
-        setSupabaseStatus('connected')
       }
+
+      setSupabaseStatus('connected')
+      setSupabaseError('')
     } catch (err) {
-      console.warn('Supabase photos load notice:', err)
-      setSupabaseStatus('fallback')
+      console.error('Supabase albums load error:', err)
+      setSupabaseStatus('error')
+      setSupabaseError(err.message)
     } finally {
       setIsLoading(false)
     }
+  }, [])
+
+  // Re-probe the backend on demand (used by the dashboard status badge)
+  const refreshBackendStatus = useCallback(async () => {
+    setSupabaseStatus('checking')
+    const { ok, error } = await checkBackendHealth()
+    setSupabaseStatus(ok ? 'connected' : isSupabaseConfigured() ? 'error' : 'unconfigured')
+    setSupabaseError(ok ? '' : error || '')
+    return { ok, error }
   }, [])
 
   useEffect(() => {
@@ -202,13 +238,18 @@ export function ContentProvider({ children }) {
 
   // --- Supabase Authentication ---
   const login = async (emailOrPasscode, password = '') => {
-    // A. Check Master Passcode
-    if (emailOrPasscode === DEFAULT_PASSCODE || emailOrPasscode === 'admin') {
+    // A. Optional master passcode (local UI gate only - grants no DB access,
+    // because RLS requires a real Supabase Auth session for writes).
+    if (ADMIN_PASSCODE && emailOrPasscode === ADMIN_PASSCODE) {
       setIsAuthenticated(true)
       try {
         sessionStorage.setItem(AUTH_KEY, 'true')
       } catch {}
-      return { success: true }
+      return {
+        success: true,
+        warning:
+          'Signed in with the master passcode. Sign in with your Supabase email and password to save changes to the backend.',
+      }
     }
 
     // B. Check Supabase Auth Email & Password
@@ -229,7 +270,12 @@ export function ContentProvider({ children }) {
       }
     }
 
-    return { success: false, error: 'Invalid credentials. Enter valid Email & Password or Master Passcode.' }
+    return {
+      success: false,
+      error: ADMIN_PASSCODE
+        ? 'Invalid credentials. Enter a valid email and password, or the master passcode.'
+        : 'Invalid credentials. Enter your Supabase admin email and password.',
+    }
   }
 
   const logout = async () => {
@@ -265,7 +311,7 @@ export function ContentProvider({ children }) {
     }))
   }
 
-  // --- Photo & Album Actions (Supabase `photos` table & `portfolio-images` bucket) ---
+  // --- Photo & Album Actions (Supabase `albums` table & `tilnogz-media` bucket) ---
 
   // 1. Add / Upload Photo
   const addAlbum = async (newPhoto) => {
@@ -289,7 +335,7 @@ export function ContentProvider({ children }) {
       ],
     }))
 
-    // Insert into Supabase `photos` table
+    // Insert into the Supabase `albums` table
     const { data, error } = await insertPhotoRecord(photoData)
     if (data) {
       setContent((prev) => ({
@@ -497,6 +543,11 @@ export function ContentProvider({ children }) {
         isLoading,
         session,
         supabaseStatus,
+        supabaseError,
+        refreshBackendStatus,
+        // Writes need a real Supabase Auth session: RLS rejects anon writes.
+        canWriteToBackend: Boolean(session),
+        isPasscodeEnabled: Boolean(ADMIN_PASSCODE),
         isAuthenticated,
         login,
         logout,

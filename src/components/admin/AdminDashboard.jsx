@@ -33,8 +33,27 @@ import {
   Film,
 } from 'lucide-react'
 import { useContent } from '../../context/ContentContext'
-import { getSupabaseConfig, saveSupabaseConfig } from '../../lib/supabase'
 import ImageUploader from './ImageUploader'
+
+// Backend status badge styling, keyed by ContentContext's supabaseStatus
+const BACKEND_STATUS = {
+  checking: {
+    label: 'Checking',
+    className: 'bg-charcoal/10 text-charcoal/70 border-charcoal/20 hover:bg-charcoal/15',
+  },
+  connected: {
+    label: 'Live',
+    className: 'bg-emerald-100 text-emerald-800 border-emerald-300 hover:bg-emerald-200',
+  },
+  unconfigured: {
+    label: 'No Backend',
+    className: 'bg-amber-100 text-amber-800 border-amber-300 hover:bg-amber-200',
+  },
+  error: {
+    label: 'Offline',
+    className: 'bg-red-100 text-red-700 border-red-300 hover:bg-red-200',
+  },
+}
 
 // Maximum Limits as requested
 const MAX_VISIBLE_PHOTOS = 45
@@ -45,6 +64,9 @@ export default function AdminDashboard({ isOpen, onClose }) {
   const {
     content,
     supabaseStatus,
+    supabaseError,
+    refreshBackendStatus,
+    canWriteToBackend,
     logout,
     updateHeroImages,
     updateAbout,
@@ -65,8 +87,9 @@ export default function AdminDashboard({ isOpen, onClose }) {
     resetToDefaults,
     exportConfig,
     importConfig,
-    saveSupabaseCredentials,
   } = useContent()
+
+  const backend = BACKEND_STATUS[supabaseStatus] || BACKEND_STATUS.checking
 
   const [activeTab, setActiveTab] = useState('albums') // 'albums' | 'videos' | 'hero' | 'about' | 'testimonials'
   const [toastMessage, setToastMessage] = useState('')
@@ -261,9 +284,18 @@ export default function AdminDashboard({ isOpen, onClose }) {
                 <h2 className="font-serif text-base sm:text-xl font-bold text-charcoal tracking-tight uppercase truncate">
                   Tilnogz Portal
                 </h2>
-                <span className="text-[9px] sm:text-[10px] font-sans font-bold px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300 flex-shrink-0">
-                  Live
-                </span>
+                <button
+                  type="button"
+                  onClick={refreshBackendStatus}
+                  title={
+                    supabaseError
+                      ? `${backend.label}: ${supabaseError} (click to retry)`
+                      : `Backend ${backend.label} (click to re-check)`
+                  }
+                  className={`text-[9px] sm:text-[10px] font-sans font-bold px-1.5 py-0.5 rounded-full border flex-shrink-0 transition-colors ${backend.className}`}
+                >
+                  {backend.label}
+                </button>
               </div>
               <p className="text-[10px] sm:text-xs text-charcoal-muted font-sans hidden sm:block">
                 Manage Photos, Videos, Hero, About & Testimonials
@@ -305,6 +337,19 @@ export default function AdminDashboard({ isOpen, onClose }) {
             </button>
           </div>
         </header>
+
+        {/* ======================================================== */}
+        {/* Read-only warning: RLS rejects writes without a session  */}
+        {/* ======================================================== */}
+        {!canWriteToBackend && (
+          <div className="bg-amber-50 border-b border-amber-200 px-4 sm:px-8 py-2 flex items-center gap-1.5 text-[11px] sm:text-xs font-sans text-amber-900 flex-shrink-0">
+            <AlertTriangle className="w-3.5 h-3.5 text-amber-600 flex-shrink-0" />
+            <span className="truncate">
+              <strong>Read-only:</strong> changes stay on this device. Sign in with your
+              Supabase email and password to save them to the backend.
+            </span>
+          </div>
+        )}
 
         {/* ======================================================== */}
         {/* Capacity Limit Reminder Alert Banner                     */}
