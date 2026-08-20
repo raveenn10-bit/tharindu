@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { ContentProvider, useContent } from './context/ContentContext'
+import UnderDevelopmentNotice from './components/UnderDevelopmentNotice'
 import Navbar from './components/Navbar'
 import Hero from './components/Hero'
 import About from './components/About'
@@ -98,6 +99,9 @@ function MainSite() {
 
       {/* WhatsApp Floating Action Button */}
       <WhatsAppFloatingButton />
+
+      {/* Under Development Top Announcement Notice */}
+      <UnderDevelopmentNotice />
 
       {/* Global Transparent Navbar */}
       <Navbar />
