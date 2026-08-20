@@ -179,13 +179,13 @@ export default function AdminDashboard({ isOpen, onClose }) {
   const publishedTestimonialsCount = (content?.testimonials || []).filter((t) => t.is_published !== false).length
 
   // --- Handlers for Albums ---
-  const handleCreateAlbum = (e) => {
+  const handleCreateAlbum = async (e) => {
     e.preventDefault()
     if (!newAlbum.title || !newAlbum.image) {
       alert('Please provide a title and upload a photo.')
       return
     }
-    addAlbum(newAlbum)
+    const res = await addAlbum(newAlbum)
     setNewAlbum({
       title: '',
       category: 'Wedding Photography',
@@ -193,15 +193,23 @@ export default function AdminDashboard({ isOpen, onClose }) {
       note: '',
     })
     setIsAddingAlbum(false)
-    showToast('Photo uploaded and published!')
+    if (res?.error) {
+      showToast('Saved locally. Backend note: ' + res.error)
+    } else {
+      showToast('Photo uploaded & saved to Database!')
+    }
   }
 
-  const handleSaveEditedAlbum = (e) => {
+  const handleSaveEditedAlbum = async (e) => {
     e.preventDefault()
     if (!editingAlbum) return
-    updateAlbum(editingAlbum.id, editingAlbum)
+    const res = await updateAlbum(editingAlbum.id, editingAlbum)
     setEditingAlbum(null)
-    showToast('Photo details updated!')
+    if (res?.error) {
+      showToast('Saved locally. Backend note: ' + res.error)
+    } else {
+      showToast('Photo details updated in Database!')
+    }
   }
 
   const handleMoveAlbum = (index, direction) => {
