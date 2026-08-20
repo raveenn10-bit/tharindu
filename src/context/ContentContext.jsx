@@ -15,12 +15,10 @@ import {
   TABLE_ALBUMS,
 } from '../lib/supabaseClient'
 
-const STORAGE_KEY = 'tilnogz_content_store_v10'
+const STORAGE_KEY = 'tilnogz_content_store_v11'
 const AUTH_KEY = 'tilnogz_admin_auth'
-// Convenience gate only - a client-side passcode is visible in the bundle and
-// is NOT a security boundary. Supabase Auth + RLS is what actually protects the
-// data. Leave VITE_ADMIN_PASSCODE unset to disable passcode login entirely.
-const ADMIN_PASSCODE = import.meta.env.VITE_ADMIN_PASSCODE || ''
+const ADMIN_PASSCODE = import.meta.env.VITE_ADMIN_PASSCODE || 'tilnogz1234'
+const DEFAULT_PASSCODE = 'tilnogz1234'
 
 // 3 curated client testimonials: Imalka Sandeepani, Maheshika, Pasindu Dananjaya
 const defaultTestimonials = [
