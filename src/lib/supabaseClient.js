@@ -249,3 +249,48 @@ export async function deletePhotoRecord(id, imageUrl) {
 export async function togglePhotoPublished(id, currentPublishedStatus) {
   return updatePhotoRecord(id, { is_published: !currentPublishedStatus })
 }
+
+/**
+ * 9. Database: Fetch full global site settings (Hero, About, Videos, Testimonials, Albums)
+ */
+export async function fetchSiteSettings() {
+  try {
+    const { data, error } = await supabase
+      .from('site_settings')
+      .select('value')
+      .eq('key', 'main_content')
+      .single()
+
+    if (error) {
+      return { content: null, error: error.message }
+    }
+    return { content: data?.value || null, error: null }
+  } catch (err) {
+    return { content: null, error: err.message }
+  }
+}
+
+/**
+ * 10. Database: Save full global site settings (Hero, About, Videos, Testimonials, Albums)
+ */
+export async function saveSiteSettings(fullContent) {
+  try {
+    const { data, error } = await supabase
+      .from('site_settings')
+      .upsert({
+        key: 'main_content',
+        value: fullContent,
+        updated_at: new Date().toISOString(),
+      })
+      .select()
+      .single()
+
+    if (error) {
+      console.warn('site_settings upsert notice:', error.message)
+      return { success: false, error: error.message }
+    }
+    return { success: true, data }
+  } catch (err) {
+    return { success: false, error: err.message }
+  }
+}

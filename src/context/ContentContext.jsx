@@ -10,6 +10,8 @@ import {
   updatePhotoRecord,
   deletePhotoRecord,
   togglePhotoPublished,
+  fetchSiteSettings,
+  saveSiteSettings,
   checkBackendHealth,
   isSupabaseConfigured,
   TABLE_ALBUMS,
@@ -160,7 +162,7 @@ export function ContentProvider({ children }) {
     return () => subscription.unsubscribe()
   }, [])
 
-  // 2. Fetch albums from Supabase on mount
+  // 2. Fetch site settings & photos from Supabase on mount
   const loadPhotosFromSupabase = useCallback(async () => {
     setIsLoading(true)
 
@@ -172,21 +174,24 @@ export function ContentProvider({ children }) {
     }
 
     try {
+      // A. Load global site settings (Hero, About, Videos, Testimonials) if stored in Supabase
+      const { content: remoteContent } = await fetchSiteSettings()
+      if (remoteContent) {
+        setContent((prev) => ({
+          ...prev,
+          ...remoteContent,
+        }))
+      }
+
+      // B. Load photos from 'photos' table
       const { data, error } = await supabase
-        .from(TABLE_ALBUMS)
+        .from('photos')
         .select('*')
         .order('sort_order', { ascending: true })
 
-      // Supabase resolves with an `error` object rather than throwing, so this
-      // branch - not the catch - is what a real backend failure lands in.
       if (error) {
-        console.error('Supabase albums load failed:', error.message)
-        setSupabaseStatus('error')
-        setSupabaseError(error.message)
-        return
-      }
-
-      if (data && data.length > 0) {
+        console.warn('Supabase photos load notice:', error.message)
+      } else if (data && data.length > 0) {
         setContent((prev) => ({
           ...prev,
           albums: data.map((p) => ({
@@ -204,7 +209,7 @@ export function ContentProvider({ children }) {
       setSupabaseStatus('connected')
       setSupabaseError('')
     } catch (err) {
-      console.error('Supabase albums load error:', err)
+      console.error('Supabase load error:', err)
       setSupabaseStatus('error')
       setSupabaseError(err.message)
     } finally {
@@ -572,7 +577,10 @@ export function ContentProvider({ children }) {
         console.error('LocalStorage write error:', e)
       }
 
-      // Also ensure backend albums/photos table is updated if configured
+      // 1. Save full site settings (Hero, About, Videos, Testimonials) to Supabase
+      await saveSiteSettings(merged)
+
+      // 2. Also ensure backend photos table is updated if configured
       if (Array.isArray(merged.albums)) {
         for (const item of merged.albums) {
           if (item.id && typeof item.id === 'number') {
