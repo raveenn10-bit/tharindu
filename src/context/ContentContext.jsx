@@ -128,6 +128,18 @@ const defaultPlans = [
   },
 ]
 
+const defaultStripPhotos = [
+  { id: 'strip-1', title: 'The Colonial Arcade', category: 'Architecture', image_url: '/photos/editorial/ed-01.jpg', is_published: true, sort_order: 1 },
+  { id: 'strip-2', title: 'Coastal Movement', category: 'Lifestyle', image_url: '/photos/street/st-01.jpg', is_published: true, sort_order: 2 },
+  { id: 'strip-3', title: 'Blue Archway', category: 'Heritage', image_url: '/photos/editorial/ed-03.jpg', is_published: true, sort_order: 3 },
+  { id: 'strip-4', title: 'Iron Spiral Staircase', category: 'Architecture', image_url: '/photos/editorial/ed-06.jpg', is_published: true, sort_order: 4 },
+  { id: 'strip-5', title: 'Floral Radiance', category: 'Portrait', image_url: '/photos/maheshika/maheshika-01.jpg', is_published: true, sort_order: 5 },
+  { id: 'strip-6', title: 'Tropical Island Lagoon', category: 'Landscape', image_url: '/photos/nature/nt-03.jpg', is_published: true, sort_order: 6 },
+  { id: 'strip-7', title: 'Grand Venue Chandelier', category: 'Events', image_url: '/photos/editorial/ed-04.jpg', is_published: true, sort_order: 7 },
+  { id: 'strip-8', title: 'Street Glance', category: 'Portrait', image_url: '/photos/street/st-02.jpg', is_published: true, sort_order: 8 },
+  { id: 'strip-9', title: 'Action Form', category: 'Action', image_url: '/photos/pasindu-dananjaya.jpg', is_published: true, sort_order: 9 },
+]
+
 const initialContentState = {
   hero: {
     desktopImage: '/photos/hero.png',
@@ -179,6 +191,7 @@ const initialContentState = {
   ],
   testimonials: defaultTestimonials,
   plans: defaultPlans,
+  stripPhotos: defaultStripPhotos,
 }
 
 function sanitizeContent(raw) {
@@ -199,6 +212,7 @@ function sanitizeContent(raw) {
     videos: Array.isArray(raw?.videos) && raw.videos.length > 0 ? raw.videos : initialContentState.videos,
     testimonials: Array.isArray(raw?.testimonials) && raw.testimonials.length > 0 ? raw.testimonials : initialContentState.testimonials,
     plans: Array.isArray(raw?.plans) && raw.plans.length > 0 ? raw.plans : defaultPlans,
+    stripPhotos: Array.isArray(raw?.stripPhotos) && raw.stripPhotos.length > 0 ? raw.stripPhotos : defaultStripPhotos,
   }
 }
 
@@ -670,6 +684,50 @@ export function ContentProvider({ children }) {
     }))
   }
 
+  // --- Photo Strip Actions ---
+  const addStripPhoto = (newPhoto) => {
+    const pWithId = {
+      id: newPhoto.id || `strip-${Date.now()}`,
+      title: newPhoto.title || 'Untitled Capture',
+      category: newPhoto.category || 'Editorial',
+      image_url: newPhoto.image_url || newPhoto.image || '',
+      is_published: true,
+      sort_order: ((content.stripPhotos || []).length) + 1,
+    }
+    setContent((prev) => ({
+      ...prev,
+      stripPhotos: [...(prev.stripPhotos || []), pWithId],
+    }))
+  }
+
+  const removeStripPhoto = (id) => {
+    setContent((prev) => ({
+      ...prev,
+      stripPhotos: (prev.stripPhotos || []).filter((p) => p.id !== id),
+    }))
+  }
+
+  const updateStripPhoto = (id, updates) => {
+    setContent((prev) => ({
+      ...prev,
+      stripPhotos: (prev.stripPhotos || []).map((p) => (p.id === id ? { ...p, ...updates } : p)),
+    }))
+  }
+
+  const togglePublishStripPhoto = (id) => {
+    const target = (content.stripPhotos || []).find((p) => p.id === id)
+    if (target) {
+      updateStripPhoto(id, { is_published: !target.is_published })
+    }
+  }
+
+  const reorderStripPhotos = (reorderedStripPhotos) => {
+    setContent((prev) => ({
+      ...prev,
+      stripPhotos: reorderedStripPhotos.map((p, idx) => ({ ...p, sort_order: idx + 1 })),
+    }))
+  }
+
   // --- Backup & Reset Actions ---
   const resetToDefaults = () => {
     setContent(initialContentState)
@@ -711,6 +769,7 @@ export function ContentProvider({ children }) {
         ...(extraPayload.videos ? { videos: extraPayload.videos } : {}),
         ...(extraPayload.testimonials ? { testimonials: extraPayload.testimonials } : {}),
         ...(extraPayload.plans ? { plans: extraPayload.plans } : {}),
+        ...(extraPayload.stripPhotos ? { stripPhotos: extraPayload.stripPhotos } : {}),
       }
 
       setContent(merged)
@@ -720,7 +779,7 @@ export function ContentProvider({ children }) {
         console.error('LocalStorage write error:', e)
       }
 
-      // 1. Save full site settings (Hero, About, Videos, Testimonials, Plans) to Supabase
+      // 1. Save full site settings (Hero, About, Videos, Testimonials, Plans, Strip Photos) to Supabase
       await saveSiteSettings(merged)
 
       // 2. Also ensure backend photos table is updated if configured
@@ -789,6 +848,11 @@ export function ContentProvider({ children }) {
         updatePlan,
         togglePublishPlan,
         reorderPlans,
+        addStripPhoto,
+        removeStripPhoto,
+        updateStripPhoto,
+        togglePublishStripPhoto,
+        reorderStripPhotos,
         saveAllChanges,
         resetToDefaults,
         exportConfig,

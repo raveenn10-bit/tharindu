@@ -1,32 +1,41 @@
 import React, { useState } from 'react'
 import { motion } from 'framer-motion'
+import { useContent } from '../context/ContentContext'
 import { editorial, street, nature } from '../data/images'
 
-// High-impact vertical gallery frames spanning full-width
-const baseStripPhotos = [
-  { id: 1, title: 'The Colonial Arcade', category: 'Architecture', image: editorial.arcade },
-  { id: 2, title: 'Coastal Movement', category: 'Lifestyle', image: street.lean },
-  { id: 3, title: 'Blue Archway', category: 'Heritage', image: editorial.blueFrame },
-  { id: 4, title: 'Iron Spiral Staircase', category: 'Architecture', image: editorial.staircase },
-  { id: 5, title: 'Floral Radiance', category: 'Portrait', image: '/photos/maheshika/maheshika-01.jpg' },
-  { id: 6, title: 'Tropical Island Lagoon', category: 'Landscape', image: nature.island },
-  { id: 7, title: 'Grand Venue Chandelier', category: 'Events', image: editorial.chandelier },
-  { id: 8, title: 'Street Glance', category: 'Portrait', image: street.glance },
-  { id: 9, title: 'Action Form', category: 'Action', image: '/photos/pasindu-dananjaya.jpg' },
-]
-
-// Duplicate the array 3 times for a seamless continuous marquee loop
-const infiniteStrip = [
-  ...baseStripPhotos.map((item, idx) => ({ ...item, uniqueKey: `strip-a-${idx}` })),
-  ...baseStripPhotos.map((item, idx) => ({ ...item, uniqueKey: `strip-b-${idx}` })),
-  ...baseStripPhotos.map((item, idx) => ({ ...item, uniqueKey: `strip-c-${idx}` })),
+// Fallback high-impact vertical gallery frames
+const fallbackStripPhotos = [
+  { id: 'strip-1', title: 'The Colonial Arcade', category: 'Architecture', image_url: editorial.arcade?.src || '/photos/editorial/ed-01.jpg', is_published: true },
+  { id: 'strip-2', title: 'Coastal Movement', category: 'Lifestyle', image_url: street.lean?.src || '/photos/street/st-01.jpg', is_published: true },
+  { id: 'strip-3', title: 'Blue Archway', category: 'Heritage', image_url: editorial.blueFrame?.src || '/photos/editorial/ed-03.jpg', is_published: true },
+  { id: 'strip-4', title: 'Iron Spiral Staircase', category: 'Architecture', image_url: editorial.staircase?.src || '/photos/editorial/ed-06.jpg', is_published: true },
+  { id: 'strip-5', title: 'Floral Radiance', category: 'Portrait', image_url: '/photos/maheshika/maheshika-01.jpg', is_published: true },
+  { id: 'strip-6', title: 'Tropical Island Lagoon', category: 'Landscape', image_url: nature.island?.src || '/photos/nature/nt-03.jpg', is_published: true },
+  { id: 'strip-7', title: 'Grand Venue Chandelier', category: 'Events', image_url: editorial.chandelier?.src || '/photos/editorial/ed-04.jpg', is_published: true },
+  { id: 'strip-8', title: 'Street Glance', category: 'Portrait', image_url: street.glance?.src || '/photos/street/st-02.jpg', is_published: true },
+  { id: 'strip-9', title: 'Action Form', category: 'Action', image_url: '/photos/pasindu-dananjaya.jpg', is_published: true },
 ]
 
 export default function FullWidthPhotoStrip({ onOpenProject }) {
+  const { content } = useContent()
   const [isPaused, setIsPaused] = useState(false)
 
+  const rawStripPhotos = Array.isArray(content?.stripPhotos) && content.stripPhotos.length > 0
+    ? content.stripPhotos
+    : fallbackStripPhotos
+
+  const visiblePhotos = rawStripPhotos.filter((p) => p && typeof p === 'object' && p.is_published !== false)
+  const displayPhotos = visiblePhotos.length > 0 ? visiblePhotos : fallbackStripPhotos
+
+  // Duplicate the array 3 times for a seamless continuous marquee loop
+  const infiniteStrip = [
+    ...displayPhotos.map((item, idx) => ({ ...item, uniqueKey: `strip-a-${item.id || idx}` })),
+    ...displayPhotos.map((item, idx) => ({ ...item, uniqueKey: `strip-b-${item.id || idx}` })),
+    ...displayPhotos.map((item, idx) => ({ ...item, uniqueKey: `strip-c-${item.id || idx}` })),
+  ]
+
   return (
-    <section className="w-full bg-white overflow-hidden select-none border-t border-charcoal/10 relative">
+    <section id="gallery-strip" className="w-full bg-white overflow-hidden select-none border-t border-charcoal/10 relative">
       {/* Continuous Infinite Auto-Scrolling Photo Ribbon */}
       <div
         className="relative w-full overflow-hidden"
@@ -48,13 +57,18 @@ export default function FullWidthPhotoStrip({ onOpenProject }) {
             x: {
               repeat: Infinity,
               repeatType: 'loop',
-              duration: 65,
+              duration: Math.max(35, displayPhotos.length * 7),
               ease: 'linear',
             },
           }}
         >
           {infiniteStrip.map((item) => {
-            const imgSrc = typeof item.image === 'string' ? item.image : item.image?.src || ''
+            const imgSrc = typeof item.image_url === 'string'
+              ? item.image_url
+              : typeof item.image === 'string'
+              ? item.image
+              : item.image?.src || ''
+
             return (
               <div
                 key={item.uniqueKey}

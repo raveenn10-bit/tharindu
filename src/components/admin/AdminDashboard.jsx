@@ -95,6 +95,11 @@ export default function AdminDashboard({ isOpen, onClose }) {
     updatePlan,
     togglePublishPlan,
     reorderPlans,
+    addStripPhoto,
+    removeStripPhoto,
+    updateStripPhoto,
+    togglePublishStripPhoto,
+    reorderStripPhotos,
     saveAllChanges,
     resetToDefaults,
     exportConfig,
@@ -103,7 +108,7 @@ export default function AdminDashboard({ isOpen, onClose }) {
 
   const backend = BACKEND_STATUS[supabaseStatus] || BACKEND_STATUS.checking
 
-  const [activeTab, setActiveTab] = useState('albums') // 'albums' | 'videos' | 'plans' | 'hero' | 'about' | 'testimonials'
+  const [activeTab, setActiveTab] = useState('albums') // 'albums' | 'videos' | 'plans' | 'strip' | 'hero' | 'about' | 'testimonials'
   const [toastMessage, setToastMessage] = useState('')
   const [isSavingAll, setIsSavingAll] = useState(false)
 
@@ -128,6 +133,15 @@ export default function AdminDashboard({ isOpen, onClose }) {
     description: '',
     featuresText: 'Up to 3 Hours Coverage\n50+ Master Retouched Photos\nHigh-Res Digital Gallery\nFull Social Usage Rights',
     inquiryMessage: '',
+  })
+
+  // Strip Photo Form States
+  const [isAddingStripPhoto, setIsAddingStripPhoto] = useState(false)
+  const [editingStripPhoto, setEditingStripPhoto] = useState(null)
+  const [newStripPhoto, setNewStripPhoto] = useState({
+    title: '',
+    category: 'Architecture',
+    image_url: '',
   })
 
   // Local Hero Form State
@@ -379,6 +393,57 @@ export default function AdminDashboard({ isOpen, onClose }) {
       reorderPlans(currentPlans)
       showToast('Plan order updated!')
     }
+  }
+
+  // --- Handlers for Photo Strip ---
+  const handleCreateStripPhoto = (e) => {
+    e.preventDefault()
+    if (!newStripPhoto.image_url) {
+      alert('Please upload or provide an image for the photo strip.')
+      return
+    }
+    addStripPhoto(newStripPhoto)
+    setNewStripPhoto({
+      title: '',
+      category: 'Architecture',
+      image_url: '',
+    })
+    setIsAddingStripPhoto(false)
+    showToast('Photo added to bottom strip!')
+  }
+
+  const handleUpdateStripPhoto = (e) => {
+    e.preventDefault()
+    if (!editingStripPhoto || !editingStripPhoto.id) return
+    updateStripPhoto(editingStripPhoto.id, {
+      title: editingStripPhoto.title,
+      category: editingStripPhoto.category,
+      image_url: editingStripPhoto.image_url,
+    })
+    setEditingStripPhoto(null)
+    showToast('Strip photo updated!')
+  }
+
+  const handleDeleteStripPhoto = (id, title) => {
+    if (window.confirm(`Are you sure you want to remove "${title || 'this photo'}" from the strip?`)) {
+      removeStripPhoto(id)
+      showToast('Photo removed from strip.')
+    }
+  }
+
+  const handleTogglePublishStripPhoto = (id) => {
+    togglePublishStripPhoto(id)
+    showToast('Strip photo visibility updated.')
+  }
+
+  const handleMoveStripPhoto = (index, direction) => {
+    const stripList = [...(content?.stripPhotos || [])]
+    const targetIndex = index + direction
+    if (targetIndex < 0 || targetIndex >= stripList.length) return
+    const [moved] = stripList.splice(index, 1)
+    stripList.splice(targetIndex, 0, moved)
+    reorderStripPhotos(stripList)
+    showToast('Strip order updated!')
   }
 
   // --- Handlers for Hero & About ---
@@ -646,6 +711,30 @@ export default function AdminDashboard({ isOpen, onClose }) {
                 }`}
               >
                 {(content?.plans || []).filter((p) => p.is_published !== false).length} active
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab('strip')}
+              className={`px-4 py-3 rounded-xl text-xs font-sans font-bold uppercase tracking-wider flex items-center justify-between transition-all ${
+                activeTab === 'strip'
+                  ? 'bg-charcoal text-white shadow-md'
+                  : 'text-charcoal hover:bg-sand/40 hover:text-copper'
+              }`}
+            >
+              <div className="flex items-center gap-2.5">
+                <Layers className="w-4 h-4" />
+                <span>Photo Strip ({(content?.stripPhotos || []).length})</span>
+              </div>
+              <span
+                className={`text-[10px] px-2 py-0.5 rounded-full ${
+                  activeTab === 'strip'
+                    ? 'bg-white/20 text-white'
+                    : 'bg-charcoal/10 text-charcoal'
+                }`}
+              >
+                {(content?.stripPhotos || []).filter((p) => p.is_published !== false).length} active
               </span>
             </button>
 
@@ -2141,6 +2230,345 @@ export default function AdminDashboard({ isOpen, onClose }) {
                 </div>
               </div>
             )}
+
+            {/* ======================================================== */}
+            {/* TAB: BOTTOM PHOTO STRIP                                 */}
+            {/* ======================================================== */}
+            {activeTab === 'strip' && (
+              <div className="space-y-4 sm:space-y-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-charcoal/10">
+                  <div>
+                    <h3 className="font-serif text-lg sm:text-2xl font-bold text-charcoal uppercase flex items-center gap-2">
+                      <Layers className="w-5 h-5 text-copper" />
+                      <span>Bottom Photo Strip (Marquee Gallery)</span>
+                    </h3>
+                    <p className="text-[11px] sm:text-xs text-charcoal-muted font-sans">
+                      Curated high-impact vertical frames rendered in the infinite marquee ribbon above the footer.
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setIsAddingStripPhoto(true)}
+                    className="px-4 py-2 bg-copper hover:bg-copper-dark text-white rounded-xl text-[11px] sm:text-xs font-sans font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 shadow-md transition-colors"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>Upload Strip Photo</span>
+                  </button>
+                </div>
+
+                {/* Upload New Strip Photo Modal */}
+                {isAddingStripPhoto && (
+                  <div className="fixed inset-0 z-[150] bg-charcoal/80 flex items-end sm:items-center justify-center p-0 sm:p-4">
+                    <form
+                      onSubmit={handleCreateStripPhoto}
+                      className="bg-white rounded-t-3xl sm:rounded-2xl max-w-lg w-full max-h-[90dvh] overflow-y-auto p-5 sm:p-6 shadow-2xl border border-charcoal/15 space-y-4"
+                    >
+                      <div className="flex items-center justify-between pb-2 border-b border-charcoal/10">
+                        <h4 className="font-serif text-base font-bold text-charcoal uppercase flex items-center gap-2">
+                          <Plus className="w-4 h-4 text-copper" />
+                          <span>Upload Photo to Bottom Strip</span>
+                        </h4>
+                        <button
+                          type="button"
+                          onClick={() => setIsAddingStripPhoto(false)}
+                          className="p-1 text-charcoal/40 hover:text-charcoal"
+                        >
+                          <X className="w-5 h-5" />
+                        </button>
+                      </div>
+
+                      {/* Image Uploader */}
+                      <div>
+                        <label className="block text-xs font-sans font-bold text-charcoal uppercase mb-1">
+                          Select Vertical Frame / Photo *
+                        </label>
+                        <ImageUploader
+                          currentImage={newStripPhoto.image_url}
+                          onUploadComplete={(url) => setNewStripPhoto({ ...newStripPhoto, image_url: url })}
+                          storageBucket="portfolio-images"
+                          aspectRatio="aspect-[2/3]"
+                          helperText="High-res portrait / vertical frame (2:3 aspect ratio recommended)"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-sans font-bold text-charcoal uppercase mb-1">
+                          Photo Title / Caption *
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={newStripPhoto.title}
+                          onChange={(e) => setNewStripPhoto({ ...newStripPhoto, title: e.target.value })}
+                          placeholder="e.g. The Colonial Arcade"
+                          className="w-full px-3 py-2 bg-[#FAF8F5] border border-charcoal/20 rounded-lg text-xs font-sans focus:outline-none focus:border-copper"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-sans font-bold text-charcoal uppercase mb-1">
+                          Category *
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={newStripPhoto.category}
+                          onChange={(e) => setNewStripPhoto({ ...newStripPhoto, category: e.target.value })}
+                          placeholder="e.g. Architecture, Portrait, Wedding, Lifestyle, Heritage"
+                          className="w-full px-3 py-2 bg-[#FAF8F5] border border-charcoal/20 rounded-lg text-xs font-sans focus:outline-none focus:border-copper mb-2"
+                        />
+                        {/* Quick Category Badges */}
+                        <div className="flex flex-wrap gap-1.5">
+                          {['Architecture', 'Portrait', 'Wedding', 'Pre-Wedding', 'Lifestyle', 'Heritage', 'Automotive', 'Landscape', 'Events'].map((cat) => (
+                            <button
+                              key={cat}
+                              type="button"
+                              onClick={() => setNewStripPhoto({ ...newStripPhoto, category: cat })}
+                              className="px-2 py-0.5 rounded-full text-[10px] font-sans font-semibold bg-sand/60 hover:bg-copper hover:text-white transition-colors text-charcoal"
+                            >
+                              {cat}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="flex gap-2 pt-2">
+                        <button
+                          type="submit"
+                          className="flex-1 py-3 bg-copper hover:bg-copper-dark text-white text-xs font-sans font-bold uppercase rounded-xl transition-colors shadow"
+                        >
+                          Add to Bottom Strip
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setIsAddingStripPhoto(false)}
+                          className="px-4 py-3 bg-charcoal/10 text-charcoal text-xs font-sans font-bold uppercase rounded-xl"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                )}
+
+                {/* Edit Strip Photo Modal */}
+                {editingStripPhoto && (
+                  <div className="fixed inset-0 z-[150] bg-charcoal/80 flex items-end sm:items-center justify-center p-0 sm:p-4">
+                    <form
+                      onSubmit={handleUpdateStripPhoto}
+                      className="bg-white rounded-t-3xl sm:rounded-2xl max-w-lg w-full max-h-[90dvh] overflow-y-auto p-5 sm:p-6 shadow-2xl border border-charcoal/15 space-y-4"
+                    >
+                      <div className="flex items-center justify-between pb-2 border-b border-charcoal/10">
+                        <h4 className="font-serif text-base font-bold text-charcoal uppercase flex items-center gap-2">
+                          <Edit className="w-4 h-4 text-copper" />
+                          <span>Edit Strip Photo</span>
+                        </h4>
+                        <button
+                          type="button"
+                          onClick={() => setEditingStripPhoto(null)}
+                          className="p-1 text-charcoal/40 hover:text-charcoal"
+                        >
+                          <X className="w-5 h-5" />
+                        </button>
+                      </div>
+
+                      {/* Image Uploader */}
+                      <div>
+                        <label className="block text-xs font-sans font-bold text-charcoal uppercase mb-1">
+                          Frame Image *
+                        </label>
+                        <ImageUploader
+                          currentImage={editingStripPhoto.image_url}
+                          onUploadComplete={(url) => setEditingStripPhoto({ ...editingStripPhoto, image_url: url })}
+                          storageBucket="portfolio-images"
+                          aspectRatio="aspect-[2/3]"
+                          helperText="Change or replace this frame image"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-sans font-bold text-charcoal uppercase mb-1">
+                          Photo Title / Caption *
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={editingStripPhoto.title || ''}
+                          onChange={(e) => setEditingStripPhoto({ ...editingStripPhoto, title: e.target.value })}
+                          className="w-full px-3 py-2 bg-[#FAF8F5] border border-charcoal/20 rounded-lg text-xs font-sans focus:outline-none focus:border-copper"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-sans font-bold text-charcoal uppercase mb-1">
+                          Category *
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={editingStripPhoto.category || ''}
+                          onChange={(e) => setEditingStripPhoto({ ...editingStripPhoto, category: e.target.value })}
+                          className="w-full px-3 py-2 bg-[#FAF8F5] border border-charcoal/20 rounded-lg text-xs font-sans focus:outline-none focus:border-copper mb-2"
+                        />
+                        {/* Quick Category Badges */}
+                        <div className="flex flex-wrap gap-1.5">
+                          {['Architecture', 'Portrait', 'Wedding', 'Pre-Wedding', 'Lifestyle', 'Heritage', 'Automotive', 'Landscape', 'Events'].map((cat) => (
+                            <button
+                              key={cat}
+                              type="button"
+                              onClick={() => setEditingStripPhoto({ ...editingStripPhoto, category: cat })}
+                              className="px-2 py-0.5 rounded-full text-[10px] font-sans font-semibold bg-sand/60 hover:bg-copper hover:text-white transition-colors text-charcoal"
+                            >
+                              {cat}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="flex gap-2 pt-2">
+                        <button
+                          type="submit"
+                          className="flex-1 py-3 bg-copper hover:bg-copper-dark text-white text-xs font-sans font-bold uppercase rounded-xl transition-colors shadow"
+                        >
+                          Save Changes
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setEditingStripPhoto(null)}
+                          className="px-4 py-3 bg-charcoal/10 text-charcoal text-xs font-sans font-bold uppercase rounded-xl"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                )}
+
+                {/* Strip Photos Cards Grid */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
+                  {(content?.stripPhotos || []).map((photo, index) => {
+                    const isPublished = photo.is_published !== false
+                    const imgSrc = photo.image_url || photo.image || ''
+
+                    return (
+                      <div
+                        key={photo.id || index}
+                        className={`group relative rounded-xl overflow-hidden border transition-all flex flex-col justify-between bg-white shadow-sm hover:shadow-md ${
+                          !isPublished ? 'opacity-50 grayscale-[50%]' : ''
+                        } border-charcoal/15`}
+                      >
+                        {/* Image Frame 2:3 */}
+                        <div className="w-full aspect-[2/3] relative bg-charcoal overflow-hidden">
+                          {imgSrc ? (
+                            <img
+                              src={imgSrc}
+                              alt={photo.title}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                              loading="lazy"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-white/30 text-xs font-sans">
+                              No Image
+                            </div>
+                          )}
+
+                          {/* Category Badge */}
+                          <div className="absolute top-2 left-2">
+                            <span className="text-[9px] font-sans font-bold tracking-wider uppercase px-2 py-0.5 rounded-full bg-copper text-white shadow">
+                              {photo.category || 'Strip'}
+                            </span>
+                          </div>
+
+                          {/* Quick Toolbar */}
+                          <div className="absolute top-2 right-2 flex items-center gap-1 bg-charcoal/80 backdrop-blur-sm p-1 rounded-lg">
+                            <button
+                              type="button"
+                              onClick={() => handleMoveStripPhoto(index, -1)}
+                              disabled={index === 0}
+                              className="p-1 rounded text-white/80 hover:text-white disabled:opacity-30"
+                              title="Move Left / Earlier"
+                            >
+                              <ArrowUp className="w-3 h-3" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleMoveStripPhoto(index, 1)}
+                              disabled={index === (content?.stripPhotos || []).length - 1}
+                              className="p-1 rounded text-white/80 hover:text-white disabled:opacity-30"
+                              title="Move Right / Later"
+                            >
+                              <ArrowDown className="w-3 h-3" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleTogglePublishStripPhoto(photo.id)}
+                              className={`p-1 rounded ${
+                                isPublished ? 'text-emerald-400' : 'text-amber-400'
+                              }`}
+                              title={isPublished ? 'Visible in strip' : 'Hidden from strip'}
+                            >
+                              {isPublished ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Card Info & Edit / Delete */}
+                        <div className="p-2.5 sm:p-3 flex items-center justify-between gap-1.5 bg-[#FAF8F5] border-t border-charcoal/10">
+                          <div className="min-w-0 flex-1">
+                            <h5 className="font-sans font-bold text-xs text-charcoal truncate uppercase">
+                              {photo.title || 'Untitled'}
+                            </h5>
+                            <span className="text-[10px] text-charcoal-muted block truncate font-sans">
+                              {photo.category}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center gap-1 flex-shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => setEditingStripPhoto({ ...photo })}
+                              className="p-1 rounded text-copper hover:bg-copper/10"
+                              title="Edit Details & Image"
+                            >
+                              <Edit className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteStripPhoto(photo.id, photo.title)}
+                              className="p-1 rounded text-red-500 hover:bg-red-500/10"
+                              title="Remove from Strip"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+
+                {/* Empty State */}
+                {(!content?.stripPhotos || content.stripPhotos.length === 0) && (
+                  <div className="text-center py-12 px-4 border-2 border-dashed border-charcoal/20 rounded-2xl">
+                    <Layers className="w-10 h-10 text-charcoal/30 mx-auto mb-3" />
+                    <h4 className="font-serif text-base font-bold text-charcoal uppercase mb-1">
+                      No Photos in Bottom Strip
+                    </h4>
+                    <p className="text-xs text-charcoal-muted font-sans max-w-sm mx-auto mb-4">
+                      Add curated vertical frames to display in the continuous marquee strip above the footer.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setIsAddingStripPhoto(true)}
+                      className="px-4 py-2 bg-copper text-white text-xs font-sans font-bold uppercase rounded-xl shadow"
+                    >
+                      + Add First Strip Photo
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
           </main>
         </div>
 
@@ -2173,12 +2601,23 @@ export default function AdminDashboard({ isOpen, onClose }) {
           <button
             type="button"
             onClick={() => setActiveTab('plans')}
-            className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl transition-all ${
+            className={`flex flex-col items-center gap-1 py-1 px-2 rounded-xl transition-all ${
               activeTab === 'plans' ? 'text-copper font-bold' : 'text-charcoal/60'
             }`}
           >
             <Package className="w-4 h-4" />
             <span className="text-[10px] uppercase font-sans">Plans</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('strip')}
+            className={`flex flex-col items-center gap-1 py-1 px-2 rounded-xl transition-all ${
+              activeTab === 'strip' ? 'text-copper font-bold' : 'text-charcoal/60'
+            }`}
+          >
+            <Layers className="w-4 h-4" />
+            <span className="text-[10px] uppercase font-sans">Strip</span>
           </button>
 
           <button
