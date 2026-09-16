@@ -20,30 +20,12 @@ export default function FullWidthPhotoStrip({ onOpenProject }) {
   const { content } = useContent()
   const [isPaused, setIsPaused] = useState(false)
 
-  // 1. All active strip photos (user-uploaded/edited photos + all existing strip frames)
+  // Use strip photos only (do not merge with albums)
   const rawStripPhotos = Array.isArray(content?.stripPhotos) && content.stripPhotos.length > 0
     ? content.stripPhotos.filter((p) => p && typeof p === 'object' && p.is_published !== false)
     : fallbackStripPhotos
 
-  const baseStrip = rawStripPhotos.length > 0 ? rawStripPhotos : fallbackStripPhotos
-
-  // 2. Also include any uploaded portfolio albums so all work is showcased
-  const existingKeys = new Set(
-    baseStrip.map((p) => (p.image_url || p.image || '').toLowerCase().trim())
-  )
-
-  const extraAlbums = Array.isArray(content?.albums)
-    ? content.albums.filter(
-        (a) =>
-          a &&
-          typeof a === 'object' &&
-          a.is_published !== false &&
-          (a.image_url || a.image) &&
-          !existingKeys.has((a.image_url || a.image).toLowerCase().trim())
-      )
-    : []
-
-  const displayPhotos = [...baseStrip, ...extraAlbums]
+  const displayPhotos = rawStripPhotos.length > 0 ? rawStripPhotos : fallbackStripPhotos
 
   // Duplicate the array 3 times for a seamless continuous marquee loop
   const infiniteStrip = [
