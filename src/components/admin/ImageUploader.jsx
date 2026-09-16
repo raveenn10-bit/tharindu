@@ -5,9 +5,13 @@ import { uploadPhotoToStorage, BUCKET_NAME } from '../../lib/supabaseClient'
 export default function ImageUploader({
   value,
   onChange,
+  currentImage,
+  onUploadComplete,
   label = 'Upload Media',
   aspectRatio = 'aspect-[4/3]',
   acceptMedia = 'image/*,video/*',
+  storageBucket,
+  helperText,
 }) {
   const fileInputRef = useRef(null)
   const [urlInput, setUrlInput] = useState('')
@@ -16,42 +20,56 @@ export default function ImageUploader({
   const [isUploading, setIsUploading] = useState(false)
   const [uploadError, setUploadError] = useState('')
 
+  const activeValue = value || currentImage || ''
+
+  const notifyChange = (newUrl) => {
+    if (typeof onChange === 'function') onChange(newUrl)
+    if (typeof onUploadComplete === 'function') onUploadComplete(newUrl)
+  }
+
   const isVideo =
-    value &&
-    (value.endsWith('.mp4') ||
-      value.endsWith('.webm') ||
-      value.endsWith('.mov') ||
-      value.includes('video') ||
-      value.includes('.mp4'))
+    activeValue &&
+    (activeValue.endsWith('.mp4') ||
+      activeValue.endsWith('.webm') ||
+      activeValue.endsWith('.mov') ||
+      activeValue.includes('video') ||
+      activeValue.includes('.mp4'))
 
   const handleFile = async (file) => {
     if (!file) return
     setIsUploading(true)
     setUploadError('')
 
-    // 1. Upload directly to the Supabase Storage bucket
-    const { publicUrl, error } = await uploadPhotoToStorage(file)
-    if (publicUrl) {
-      onChange(publicUrl)
-      setIsUploading(false)
-      return
-    }
+    try {
+      // 1. Upload directly to the Supabase Storage bucket
+      const bucket = storageBucket || BUCKET_NAME
+      const { publicUrl, error } = await uploadPhotoToStorage(file, bucket)
+      if (publicUrl) {
+        notifyChange(publicUrl)
+        setIsUploading(false)
+        return
+      }
 
-    if (error) {
-      console.warn('Supabase storage upload error, fallback to local FileReader:', error)
-    }
+      if (error) {
+        console.warn('Supabase storage upload error, fallback to local FileReader:', error)
+      }
 
-    // 2. Local fallback if offline: read as data URL
-    const reader = new FileReader()
-    reader.onload = (e) => {
-      onChange(e.target.result)
+      // 2. Local fallback if offline: read as data URL
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        notifyChange(e.target.result)
+        setIsUploading(false)
+      }
+      reader.onerror = () => {
+        setUploadError('Failed to read file.')
+        setIsUploading(false)
+      }
+      reader.readAsDataURL(file)
+    } catch (err) {
+      console.error('File handle error:', err)
+      setUploadError(err.message || 'Failed to upload.')
       setIsUploading(false)
     }
-    reader.onerror = () => {
-      setUploadError('Failed to read file.')
-      setIsUploading(false)
-    }
-    reader.readAsDataURL(file)
   }
 
   const handleDrop = (e) => {
@@ -65,7 +83,7 @@ export default function ImageUploader({
   const handleUrlSubmit = (e) => {
     e.preventDefault()
     if (urlInput.trim()) {
-      onChange(urlInput.trim())
+      notifyChange(urlInput.trim())
       setUrlInput('')
       setIsEnteringUrl(false)
     }
@@ -93,20 +111,20 @@ export default function ImageUploader({
             Uploading to Supabase Storage...
           </span>
         </div>
-      ) : value ? (
+      ) : activeValue ? (
         <div className="relative group rounded-xl overflow-hidden border border-charcoal/15 bg-sand/30">
           <div
             className={`${aspectRatio} w-full overflow-hidden flex items-center justify-center bg-charcoal/5`}
           >
             {isVideo ? (
               <video
-                src={value}
+                src={activeValue}
                 controls
                 className="w-full h-full object-cover object-center"
               />
             ) : (
               <img
-                src={value}
+                src={activeValue}
                 alt="Media Preview"
                 className="w-full h-full object-cover object-center"
               />
@@ -122,7 +140,7 @@ export default function ImageUploader({
             </button>
             <button
               type="button"
-              onClick={() => onChange('')}
+              onClick={() => notifyChange('')}
               className="p-1.5 bg-red-600 text-white rounded shadow hover:bg-red-700 transition-colors"
               title="Remove Media"
             >

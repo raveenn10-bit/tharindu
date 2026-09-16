@@ -2284,6 +2284,8 @@ export default function AdminDashboard({ isOpen, onClose }) {
                           Select Vertical Frame / Photo *
                         </label>
                         <ImageUploader
+                          value={newStripPhoto.image_url}
+                          onChange={(url) => setNewStripPhoto({ ...newStripPhoto, image_url: url })}
                           currentImage={newStripPhoto.image_url}
                           onUploadComplete={(url) => setNewStripPhoto({ ...newStripPhoto, image_url: url })}
                           storageBucket="portfolio-images"
@@ -2379,6 +2381,8 @@ export default function AdminDashboard({ isOpen, onClose }) {
                           Frame Image *
                         </label>
                         <ImageUploader
+                          value={editingStripPhoto.image_url}
+                          onChange={(url) => setEditingStripPhoto({ ...editingStripPhoto, image_url: url })}
                           currentImage={editingStripPhoto.image_url}
                           onUploadComplete={(url) => setEditingStripPhoto({ ...editingStripPhoto, image_url: url })}
                           storageBucket="portfolio-images"
