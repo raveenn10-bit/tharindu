@@ -466,10 +466,12 @@ export function ContentProvider({ children }) {
     // Insert into the Supabase `albums` table
     const { data, error } = await insertPhotoRecord(photoData)
     if (data) {
-      setContent((prev) => ({
-        ...prev,
-        albums: prev.albums.map((a) => (a.id === tempId ? data : a)),
-      }))
+      setContent((prev) => {
+        const nextAlbums = prev.albums.map((a) => (a.id === tempId ? data : a))
+        const nextContent = { ...prev, albums: nextAlbums }
+        saveSiteSettings(nextContent).catch(console.warn)
+        return nextContent
+      })
     }
     return { data, error }
   }
@@ -477,10 +479,12 @@ export function ContentProvider({ children }) {
   // 2. Remove / Delete Photo
   const removeAlbum = async (id, imageUrl) => {
     // Optimistic remove
-    setContent((prev) => ({
-      ...prev,
-      albums: prev.albums.filter((a) => a.id !== id),
-    }))
+    setContent((prev) => {
+      const nextAlbums = prev.albums.filter((a) => a.id !== id)
+      const nextContent = { ...prev, albums: nextAlbums }
+      saveSiteSettings(nextContent).catch(console.warn)
+      return nextContent
+    })
 
     // Delete from Supabase Database & Storage Bucket
     return deletePhotoRecord(id, imageUrl)
@@ -497,10 +501,12 @@ export function ContentProvider({ children }) {
     if (updates.is_published !== undefined) dbPayload.is_published = updates.is_published
 
     // Optimistic UI update
-    setContent((prev) => ({
-      ...prev,
-      albums: prev.albums.map((a) => (a.id === id ? { ...a, ...updates } : a)),
-    }))
+    setContent((prev) => {
+      const nextAlbums = prev.albums.map((a) => (a.id === id ? { ...a, ...updates } : a))
+      const nextContent = { ...prev, albums: nextAlbums }
+      saveSiteSettings(nextContent).catch(console.warn)
+      return nextContent
+    })
 
     return updatePhotoRecord(id, dbPayload)
   }
@@ -510,10 +516,12 @@ export function ContentProvider({ children }) {
     const target = content.albums.find((a) => a.id === id)
     if (target) {
       const nextStatus = !target.is_published
-      setContent((prev) => ({
-        ...prev,
-        albums: prev.albums.map((a) => (a.id === id ? { ...a, is_published: nextStatus } : a)),
-      }))
+      setContent((prev) => {
+        const nextAlbums = prev.albums.map((a) => (a.id === id ? { ...a, is_published: nextStatus } : a))
+        const nextContent = { ...prev, albums: nextAlbums }
+        saveSiteSettings(nextContent).catch(console.warn)
+        return nextContent
+      })
       await togglePhotoPublished(id, target.is_published)
     }
   }
@@ -525,10 +533,11 @@ export function ContentProvider({ children }) {
       sort_order: idx + 1,
     }))
 
-    setContent((prev) => ({
-      ...prev,
-      albums: updated,
-    }))
+    setContent((prev) => {
+      const nextContent = { ...prev, albums: updated }
+      saveSiteSettings(nextContent).catch(console.warn)
+      return nextContent
+    })
 
     for (const item of updated) {
       await updatePhotoRecord(item.id, { sort_order: item.sort_order })
@@ -685,7 +694,7 @@ export function ContentProvider({ children }) {
   }
 
   // --- Photo Strip Actions ---
-  const addStripPhoto = (newPhoto) => {
+  const addStripPhoto = async (newPhoto) => {
     const pWithId = {
       id: newPhoto.id || `strip-${Date.now()}`,
       title: newPhoto.title || 'Untitled Capture',
@@ -694,38 +703,58 @@ export function ContentProvider({ children }) {
       is_published: true,
       sort_order: ((content.stripPhotos || []).length) + 1,
     }
-    setContent((prev) => ({
-      ...prev,
-      stripPhotos: [...(prev.stripPhotos || []), pWithId],
-    }))
-  }
-
-  const removeStripPhoto = (id) => {
-    setContent((prev) => ({
-      ...prev,
-      stripPhotos: (prev.stripPhotos || []).filter((p) => p.id !== id),
-    }))
-  }
-
-  const updateStripPhoto = (id, updates) => {
-    setContent((prev) => ({
-      ...prev,
-      stripPhotos: (prev.stripPhotos || []).map((p) => (p.id === id ? { ...p, ...updates } : p)),
-    }))
-  }
-
-  const togglePublishStripPhoto = (id) => {
-    const target = (content.stripPhotos || []).find((p) => p.id === id)
-    if (target) {
-      updateStripPhoto(id, { is_published: !target.is_published })
+    const nextStrip = [...(content.stripPhotos || []), pWithId]
+    const nextContent = { ...content, stripPhotos: nextStrip }
+    setContent(nextContent)
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(nextContent))
+      await saveSiteSettings(nextContent)
+    } catch (e) {
+      console.warn('Auto-save strip photo error:', e)
     }
   }
 
-  const reorderStripPhotos = (reorderedStripPhotos) => {
-    setContent((prev) => ({
-      ...prev,
-      stripPhotos: reorderedStripPhotos.map((p, idx) => ({ ...p, sort_order: idx + 1 })),
-    }))
+  const removeStripPhoto = async (id) => {
+    const nextStrip = (content.stripPhotos || []).filter((p) => p.id !== id)
+    const nextContent = { ...content, stripPhotos: nextStrip }
+    setContent(nextContent)
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(nextContent))
+      await saveSiteSettings(nextContent)
+    } catch (e) {
+      console.warn('Auto-save strip photo error:', e)
+    }
+  }
+
+  const updateStripPhoto = async (id, updates) => {
+    const nextStrip = (content.stripPhotos || []).map((p) => (p.id === id ? { ...p, ...updates } : p))
+    const nextContent = { ...content, stripPhotos: nextStrip }
+    setContent(nextContent)
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(nextContent))
+      await saveSiteSettings(nextContent)
+    } catch (e) {
+      console.warn('Auto-save strip photo error:', e)
+    }
+  }
+
+  const togglePublishStripPhoto = async (id) => {
+    const target = (content.stripPhotos || []).find((p) => p.id === id)
+    if (target) {
+      await updateStripPhoto(id, { is_published: !target.is_published })
+    }
+  }
+
+  const reorderStripPhotos = async (reorderedStripPhotos) => {
+    const nextStrip = reorderedStripPhotos.map((p, idx) => ({ ...p, sort_order: idx + 1 }))
+    const nextContent = { ...content, stripPhotos: nextStrip }
+    setContent(nextContent)
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(nextContent))
+      await saveSiteSettings(nextContent)
+    } catch (e) {
+      console.warn('Auto-save strip photo error:', e)
+    }
   }
 
   // --- Backup & Reset Actions ---

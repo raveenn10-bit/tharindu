@@ -118,19 +118,26 @@ export default function Footer({ onOpenAdmin }) {
           </p>
         </motion.div>
 
-        {/* Copyright Line + Discreet Owner Login Trigger */}
-        <motion.div variants={fadeUp} className="border-t border-charcoal/10 pt-6 sm:pt-8 flex items-center justify-center gap-3 text-[10px] sm:text-[11px] text-charcoal-muted font-sans tracking-wide">
-          <span>
-            Copyright &copy; {new Date().getFullYear()} Tilnogz Photography. All Rights Reserved.
-          </span>
-          <button
-            type="button"
-            onClick={onOpenAdmin}
-            title="Owner Dashboard Access"
-            className="text-charcoal/30 hover:text-copper transition-colors p-1"
-          >
-            <Lock className="w-3 h-3" />
-          </button>
+        {/* Copyright Line + Developer Credit + Discreet Owner Login Trigger */}
+        <motion.div variants={fadeUp} className="border-t border-charcoal/10 pt-6 sm:pt-8 flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 text-[10px] sm:text-[11px] text-charcoal-muted font-sans tracking-wide">
+          <div className="flex items-center gap-2">
+            <span>
+              Copyright &copy; {new Date().getFullYear()} Tilnogz Photography. All Rights Reserved.
+            </span>
+            <button
+              type="button"
+              onClick={onOpenAdmin}
+              title="Owner Dashboard Access"
+              className="text-charcoal/30 hover:text-copper transition-colors p-1"
+            >
+              <Lock className="w-3 h-3" />
+            </button>
+          </div>
+          <span className="hidden sm:inline text-charcoal/30">•</span>
+          <div>
+            <span>Designed & Developed by </span>
+            <span className="font-semibold text-charcoal/85 tracking-wider">Harsh Apex Digital Solutions</span>
+          </div>
         </motion.div>
       </motion.div>
     </footer>

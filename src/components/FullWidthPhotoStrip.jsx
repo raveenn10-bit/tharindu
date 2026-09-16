@@ -20,12 +20,48 @@ export default function FullWidthPhotoStrip({ onOpenProject }) {
   const { content } = useContent()
   const [isPaused, setIsPaused] = useState(false)
 
-  const rawStripPhotos = Array.isArray(content?.stripPhotos) && content.stripPhotos.length > 0
-    ? content.stripPhotos
-    : fallbackStripPhotos
+  // Check if admin explicitly uploaded custom strip photos (with remote/uploaded URLs)
+  const isCustomUploaded = (url) => {
+    if (!url || typeof url !== 'string') return false
+    return (
+      url.startsWith('http://') ||
+      url.startsWith('https://') ||
+      url.startsWith('blob:') ||
+      url.startsWith('data:') ||
+      url.includes('supabase.co') ||
+      url.includes('storage')
+    )
+  }
 
-  const visiblePhotos = rawStripPhotos.filter((p) => p && typeof p === 'object' && p.is_published !== false)
-  const displayPhotos = visiblePhotos.length > 0 ? visiblePhotos : fallbackStripPhotos
+  const customStripPhotos = Array.isArray(content?.stripPhotos)
+    ? content.stripPhotos.filter(
+        (p) => p && typeof p === 'object' && p.is_published !== false && isCustomUploaded(p.image_url || p.image)
+      )
+    : []
+
+  const publishedAlbums = Array.isArray(content?.albums)
+    ? content.albums.filter(
+        (a) => a && typeof a === 'object' && a.is_published !== false && (a.image_url || a.image)
+      )
+    : []
+
+  // Dynamic priority:
+  // 1. Explicitly uploaded custom strip photos
+  // 2. Uploaded photos from Albums/Portfolio (so photos uploaded in dashboard immediately appear in the strip)
+  // 3. Saved stripPhotos array
+  // 4. Default fallback photos
+  let displayPhotos = []
+  if (customStripPhotos.length > 0) {
+    displayPhotos = customStripPhotos
+  } else if (publishedAlbums.length > 0) {
+    displayPhotos = publishedAlbums
+  } else if (Array.isArray(content?.stripPhotos) && content.stripPhotos.length > 0) {
+    displayPhotos = content.stripPhotos.filter((p) => p && p.is_published !== false)
+  }
+
+  if (!displayPhotos || displayPhotos.length === 0) {
+    displayPhotos = fallbackStripPhotos
+  }
 
   // Duplicate the array 3 times for a seamless continuous marquee loop
   const infiniteStrip = [
